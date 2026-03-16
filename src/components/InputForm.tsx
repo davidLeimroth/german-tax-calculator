@@ -54,6 +54,11 @@ const DEFAULT_VALUES: InputFormValues = {
 export function formValuesToTaxInput(values: InputFormValues): TaxInput {
   const annualGrossSalary =
     values.salaryMode === 'monthly' ? values.grossSalary * 12 : values.grossSalary;
+  // For PKV users, use the default Zusatzbeitrag for the GKV-equivalent Vorsorgepauschale
+  const zusatzbeitragRate =
+    values.healthInsuranceType === 'privat'
+      ? KV_DEFAULT_ZUSATZBEITRAG
+      : values.zusatzbeitragRate / 100;
   return {
     annualGrossSalary,
     taxClass: values.taxClass,
@@ -61,7 +66,7 @@ export function formValuesToTaxInput(values: InputFormValues): TaxInput {
     churchMember: values.churchMember,
     childrenCount: values.childrenCount,
     healthInsuranceType: values.healthInsuranceType,
-    zusatzbeitragRate: values.zusatzbeitragRate / 100,
+    zusatzbeitragRate,
     privatHealthInsuranceMonthly: values.privatHealthInsuranceMonthly,
     age: values.age,
   };

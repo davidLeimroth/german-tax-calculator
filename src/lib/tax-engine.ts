@@ -85,6 +85,8 @@ function calculateVorsorgepauschale(
   state: Bundesland,
   kvRate: number,
   zusatzbeitrag: number,
+  childrenCount: number,
+  age: number,
 ): number {
   const bbgRvAv = getBBGRvAv(state);
   const rvBasis = Math.min(annualGross, bbgRvAv);
@@ -92,12 +94,28 @@ function calculateVorsorgepauschale(
   // Part 1: Rentenversicherung contribution (employee share)
   const rvPauschale = rvBasis * (RV_RATE / 2);
 
+  const kvPvBasis = Math.min(annualGross, BBG_KV_PV);
+
   // Part 2: Krankenversicherung (employee share)
   // For both GKV and PKV, use the GKV-equivalent as an approximation
-  const kvBasis = Math.min(annualGross, BBG_KV_PV);
-  const kvPauschale = kvBasis * ((kvRate + zusatzbeitrag) / 2);
+  const kvPauschale = kvPvBasis * ((kvRate + zusatzbeitrag) / 2);
 
-  return round2(rvPauschale + kvPauschale);
+  // Part 3: Pflegeversicherung (employee share)
+  let pvEmployeeRate = PV_BASE_RATE / 2;
+  if (state === 'Sachsen') {
+    pvEmployeeRate += PV_SACHSEN_EXTRA_EMPLOYEE;
+  }
+  if (childrenCount === 0 && age >= 23) {
+    pvEmployeeRate += PV_CHILDLESS_SURCHARGE;
+  }
+  if (childrenCount >= 2) {
+    const discountChildren = Math.min(childrenCount, PV_MAX_DISCOUNT_CHILDREN) - 1;
+    pvEmployeeRate -= discountChildren * PV_CHILD_DISCOUNT;
+  }
+  pvEmployeeRate = Math.max(0, pvEmployeeRate);
+  const pvPauschale = kvPvBasis * pvEmployeeRate;
+
+  return round2(rvPauschale + kvPauschale + pvPauschale);
 }
 
 /**
@@ -111,10 +129,11 @@ function computeZvE(
   childrenCount: number,
   kvRate: number,
   zusatzbeitrag: number,
+  age: number,
 ): number {
   const arbeitnehmerPauschbetrag = getArbeitnehmerPauschbetragForClass(taxClass);
   const sonderausgabenPauschbetrag = getSonderausgabenPauschbetragForClass(taxClass);
-  const vorsorgepauschale = calculateVorsorgepauschale(annualGross, state, kvRate, zusatzbeitrag);
+  const vorsorgepauschale = calculateVorsorgepauschale(annualGross, state, kvRate, zusatzbeitrag, childrenCount, age);
 
   let zvE = annualGross - arbeitnehmerPauschbetrag - sonderausgabenPauschbetrag - vorsorgepauschale;
 
@@ -154,10 +173,11 @@ export function calculateLohnsteuer(
   childrenCount: number,
   kvRate: number,
   zusatzbeitrag: number,
+  age: number = 30,
 ): number {
   if (annualGross <= 0) return 0;
 
-  const zvE = computeZvE(annualGross, taxClass, state, childrenCount, kvRate, zusatzbeitrag);
+  const zvE = computeZvE(annualGross, taxClass, state, childrenCount, kvRate, zusatzbeitrag, age);
   return computeTaxForZvE(zvE, taxClass);
 }
 
@@ -328,13 +348,14 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
     childrenCount,
     kvRate,
     zusatzbeitragRate,
+    age,
   );
 
   // Calculate hypothetical Lohnsteuer with Kinderfreibetrag for Soli/Kirchensteuer
   // Per German tax law, Kinderfreibetrag reduces the Lohnsteuer basis for Soli and KiSt
   let lohnsteuerForSoliKiSt = lohnsteuerAnnual;
   if (childrenCount > 0) {
-    const zvE = computeZvE(annualGrossSalary, taxClass, state, childrenCount, kvRate, zusatzbeitragRate);
+    const zvE = computeZvE(annualGrossSalary, taxClass, state, childrenCount, kvRate, zusatzbeitragRate, age);
     const reducedZvE = Math.max(0, zvE - childrenCount * KINDERFREIBETRAG_SOLI);
     lohnsteuerForSoliKiSt = computeTaxForZvE(reducedZvE, taxClass);
   }
