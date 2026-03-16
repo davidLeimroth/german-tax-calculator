@@ -63,15 +63,15 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 **Files:**
 - Create: `src/components/TaxCalculator.tsx`, `src/components/InputForm.tsx`
 
-- [ ] Build the main TaxCalculator React component (the Astro island entry point with `client:load`)
-- [ ] Build InputForm using TanStack Form with fields: monthly/annual gross salary, tax class (I-VI), Bundesland, church membership (yes/no), children count, health insurance type (gesetzlich/privat), Zusatzbeitrag percentage
-- [ ] Apply DaisyUI form components (input, select, toggle, range) for polished look
-- [ ] Add smart defaults (Steuerklasse I, no church tax, gesetzlich, Bayern, 0 children)
-- [ ] Add input validation (salary > 0, valid ranges for all fields)
-- [ ] Wire form to tax engine: calculate on every change for instant results
-- [ ] Add responsive layout: form on left/top, results on right/bottom
-- [ ] Write tests for form rendering, default values, and validation behavior
-- [ ] Run project test suite - must pass before task 4
+- [x] Build the main TaxCalculator React component (the Astro island entry point with `client:load`)
+- [x] Build InputForm using TanStack Form with fields: monthly/annual gross salary, tax class (I-VI), Bundesland, church membership (yes/no), children count, health insurance type (gesetzlich/privat), Zusatzbeitrag percentage
+- [x] Apply DaisyUI form components (input, select, toggle, range) for polished look
+- [x] Add smart defaults (Steuerklasse I, no church tax, gesetzlich, Bayern, 0 children)
+- [x] Add input validation (salary > 0, valid ranges for all fields)
+- [x] Wire form to tax engine: calculate on every change for instant results
+- [x] Add responsive layout: form on left/top, results on right/bottom
+- [x] Write tests for form rendering, default values, and validation behavior
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Charts and visual breakdown with Nivo
 
