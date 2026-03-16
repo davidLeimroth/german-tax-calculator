@@ -12,8 +12,8 @@ export const GRUNDFREIBETRAG = 12096;
 /**
  * Income tax zone boundaries (annual taxable income).
  * Zone 1: 0 - GRUNDFREIBETRAG (0% tax)
- * Zone 2: GRUNDFREIBETRAG+1 - 17,443 (linear progressive 14%-24%)
- * Zone 3: 17,444 - 68,480 (linear progressive 24%-42%)
+ * Zone 2: GRUNDFREIBETRAG+1 - 17,443 (linear progressive 14%-~24%)
+ * Zone 3: 17,444 - 68,480 (linear progressive ~24%-42%)
  * Zone 4: 68,481 - 277,825 (42%)
  * Zone 5: > 277,825 (45%)
  */
@@ -158,9 +158,9 @@ export const ENTLASTUNGSBETRAG_ADDITIONAL_CHILD = 240;
 /**
  * Kinderfreibetrag per child (for Soli/Kirchensteuer check, not used directly in Lohnsteuer
  * as the system compares Kindergeld vs. Kinderfreibetrag automatically).
- * 2025: 6,024 EUR per child (for Soli calculation: 9,312 EUR per child)
+ * 2025: 6,672 EUR per child + 2,928 EUR BEA = 9,600 EUR per child
  */
-export const KINDERFREIBETRAG_SOLI = 9312;
+export const KINDERFREIBETRAG_SOLI = 9600;
 
 /**
  * Sachsen has a special rule: the employer pays a higher PV share (employee pays more).

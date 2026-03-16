@@ -53,25 +53,25 @@ export function calculateEinkommensteuer(zvE: number): number {
   if (x <= TAX_ZONE_2_END) {
     // Zone 2: progressive 14% to ~24%
     const y = (x - GRUNDFREIBETRAG) / 10000;
-    const tax = (922.98 * y + 1400) * y;
+    const tax = (932.3 * y + 1400) * y;
     return floorToEuro(tax);
   }
 
   if (x <= TAX_ZONE_3_END) {
     // Zone 3: progressive ~24% to 42%
     const z = (x - TAX_ZONE_2_END) / 10000;
-    const tax = (181.19 * z + 2397) * z + 1025.38;
+    const tax = (176.64 * z + 2397) * z + 1015.13;
     return floorToEuro(tax);
   }
 
   if (x <= TAX_ZONE_4_END) {
     // Zone 4: 42%
-    const tax = 0.42 * x - 10971.01;
+    const tax = 0.42 * x - 10911.92;
     return floorToEuro(tax);
   }
 
   // Zone 5: 45% (Reichensteuer)
-  const tax = 0.45 * x - 19307.26;
+  const tax = 0.45 * x - 19246.67;
   return floorToEuro(tax);
 }
 
