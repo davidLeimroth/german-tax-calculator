@@ -91,13 +91,13 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 **Files:**
 - Create: `src/components/BreakdownTable.tsx`
 
-- [ ] Build a TanStack Table showing each deduction as a row: name, employee share, employer share, total, percentage of gross
-- [ ] Include summary rows for total deductions and net salary
-- [ ] Style with DaisyUI table component (striped, hover, compact)
-- [ ] Add column sorting capability
-- [ ] Make table responsive (horizontal scroll on mobile or card layout)
-- [ ] Write tests for table rendering, correct data display, and sorting
-- [ ] Run project test suite - must pass before task 6
+- [x] Build a TanStack Table showing each deduction as a row: name, employee share, employer share, total, percentage of gross
+- [x] Include summary rows for total deductions and net salary
+- [x] Style with DaisyUI table component (striped, hover, compact)
+- [x] Add column sorting capability
+- [x] Make table responsive (horizontal scroll on mobile or card layout)
+- [x] Write tests for table rendering, correct data display, and sorting
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Polish, theme, and responsive design
 

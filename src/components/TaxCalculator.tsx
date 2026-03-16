@@ -5,6 +5,7 @@ import { calculateNetSalary } from '../lib/tax-engine';
 import type { TaxResult } from '../lib/types';
 import SalaryChart from './SalaryChart';
 import BreakdownBar from './BreakdownBar';
+import BreakdownTable from './BreakdownTable';
 
 function formatEur(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
@@ -34,40 +35,6 @@ function ResultsSummary({ result }: { result: TaxResult }) {
   );
 }
 
-function DeductionsList({ result }: { result: TaxResult }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="table table-sm" aria-label="Deductions breakdown">
-        <thead>
-          <tr>
-            <th>Abzug</th>
-            <th className="text-right">Monatlich</th>
-            <th className="text-right">Jaehrlich</th>
-          </tr>
-        </thead>
-        <tbody>
-          {result.deductions.map((d) => (
-            <tr key={d.name}>
-              <td>{d.name}</td>
-              <td className="text-right">{formatEur(d.employeeShareMonthly)}</td>
-              <td className="text-right">{formatEur(d.employeeShareAnnual)}</td>
-            </tr>
-          ))}
-          <tr className="font-bold border-t-2">
-            <td>Gesamt Abzuege</td>
-            <td className="text-right">{formatEur(result.totalDeductionsMonthly)}</td>
-            <td className="text-right">{formatEur(result.totalDeductionsAnnual)}</td>
-          </tr>
-          <tr className="font-bold text-success">
-            <td>Netto</td>
-            <td className="text-right">{formatEur(result.monthlyNet)}</td>
-            <td className="text-right">{formatEur(result.annualNet)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export default function TaxCalculator() {
   const [formValues, setFormValues] = useState<InputFormValues>(DEFAULT_VALUES);
@@ -107,7 +74,7 @@ export default function TaxCalculator() {
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-xl">Aufschluesselung</h2>
-                <DeductionsList result={result} />
+                <BreakdownTable result={result} />
               </div>
             </div>
           </>
