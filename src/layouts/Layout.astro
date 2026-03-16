@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = 'Brutto-Netto-Rechner | Gehaltsrechner fuer Deutschland',
-  description = 'Berechnen Sie Ihr Nettogehalt aus dem Bruttoeinkommen. Inklusive Lohnsteuer, Solidaritaetszuschlag und allen Sozialversicherungsbeitraegen.',
+  title = 'Brutto-Netto-Rechner | Gehaltsrechner für Deutschland',
+  description = 'Berechnen Sie Ihr Nettogehalt aus dem Bruttoeinkommen. Inklusive Lohnsteuer, Solidaritätszuschlag und allen Sozialversicherungsbeiträgen.',
 } = Astro.props;
 
 const siteUrl = 'https://davidleimroth.github.io/steuerrechner';
@@ -48,8 +48,17 @@ const siteUrl = 'https://davidleimroth.github.io/steuerrechner';
         document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>
+    <!-- Prevent flash of wrong language -->
+    <script is:inline>
+      (function() {
+        const locale = localStorage.getItem('locale');
+        if (locale === 'en' || locale === 'de' || locale === 'es') {
+          document.documentElement.setAttribute('lang', locale);
+        }
+      })();
+    </script>
   </head>
-  <body class="min-h-screen bg-base-200 transition-colors duration-300">
+  <body class="min-h-screen bg-base-200">
     <slot />
   </body>
 </html>
