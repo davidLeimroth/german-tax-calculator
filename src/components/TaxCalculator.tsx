@@ -3,6 +3,8 @@ import InputForm, { DEFAULT_VALUES, formValuesToTaxInput } from './InputForm';
 import type { InputFormValues } from './InputForm';
 import { calculateNetSalary } from '../lib/tax-engine';
 import type { TaxResult } from '../lib/types';
+import SalaryChart from './SalaryChart';
+import BreakdownBar from './BreakdownBar';
 
 function formatEur(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
@@ -90,6 +92,18 @@ export default function TaxCalculator() {
         {result ? (
           <>
             <ResultsSummary result={result} />
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title text-xl">Verteilung</h2>
+                <SalaryChart result={result} />
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title text-xl">Monatsansicht</h2>
+                <BreakdownBar result={result} />
+              </div>
+            </div>
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-xl">Aufschluesselung</h2>

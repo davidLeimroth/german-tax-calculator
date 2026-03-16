@@ -78,13 +78,13 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 **Files:**
 - Create: `src/components/SalaryChart.tsx`, `src/components/BreakdownBar.tsx`
 
-- [ ] Build a Nivo Pie chart component showing the proportional breakdown of gross salary (net pay, Lohnsteuer, Soli, Kirchensteuer, KV, PV, RV, AV)
-- [ ] Use a clear color palette with DaisyUI theme colors, with labels and tooltips showing Euro amounts and percentages
-- [ ] Build a Nivo Bar chart showing a stacked monthly bar (or comparison between gross and deductions)
-- [ ] Make charts responsive and animated on data change
-- [ ] Add a summary card above charts showing key numbers: Brutto, Netto, total Abzuege (with DaisyUI stat components)
-- [ ] Write tests verifying chart components render with sample data and update on prop changes
-- [ ] Run project test suite - must pass before task 5
+- [x] Build a Nivo Pie chart component showing the proportional breakdown of gross salary (net pay, Lohnsteuer, Soli, Kirchensteuer, KV, PV, RV, AV)
+- [x] Use a clear color palette with DaisyUI theme colors, with labels and tooltips showing Euro amounts and percentages
+- [x] Build a Nivo Bar chart showing a stacked monthly bar (or comparison between gross and deductions)
+- [x] Make charts responsive and animated on data change
+- [x] Add a summary card above charts showing key numbers: Brutto, Netto, total Abzuege (with DaisyUI stat components)
+- [x] Write tests verifying chart components render with sample data and update on prop changes
+- [x] Run project test suite - must pass before task 5
 
 ### Task 5: Detailed breakdown table with TanStack Table
 
