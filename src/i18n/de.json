@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "title": "Brutto-Netto-Rechner | Gehaltsrechner für Deutschland",
+    "description": "Berechne dein Nettogehalt aus dem Bruttoeinkommen. Inklusive Lohnsteuer, Solidaritätszuschlag und allen Sozialversicherungsbeiträgen."
+  },
+  "header": {
+    "title": "Brutto-Netto-Rechner",
+    "subtitle": "Gehaltsrechner für Deutschland",
+    "skipLink": "Zum Rechner springen"
+  },
+  "footer": {
+    "disclaimer": "Hinweis: Dieser Rechner dient nur zur Orientierung und stellt keine Steuerberatung dar. Die Ergebnisse sind Näherungswerte und können von der tatsächlichen Abrechnung abweichen.",
+    "copyright": "Brutto-Netto-Rechner \u00b7 Keine Gewähr für die Richtigkeit der Berechnungen."
+  },
+  "input": {
+    "heading": "Eingaben",
+    "taxYear": "Steuerjahr",
+    "grossIncome": "Bruttoeinkommen (EUR)",
+    "salaryPeriod": "Gehaltszeitraum",
+    "annual": "Jährlich",
+    "monthly": "Monatlich",
+    "taxClass": "Steuerklasse",
+    "taxClassOption": "Steuerklasse",
+    "state": "Bundesland",
+    "churchMember": "Kirchenmitglied",
+    "churchMemberAria": "Kirchenmitglied",
+    "childrenCount": "Anzahl Kinder",
+    "age": "Alter",
+    "healthInsurance": "Krankenversicherung",
+    "healthPublic": "Gesetzlich (GKV)",
+    "healthPrivate": "Privat (PKV)",
+    "additionalContribution": "Zusatzbeitrag (%)",
+    "pkvMonthly": "PKV Eigenbeitrag monatlich (EUR)",
+    "formAriaLabel": "Steuerrechner Eingabeformular"
+  },
+  "results": {
+    "heading": "Ergebnisse",
+    "grossMonthly": "Brutto / Monat",
+    "deductionsMonthly": "Abzüge / Monat",
+    "netMonthly": "Netto / Monat",
+    "perYear": "/ Jahr",
+    "distribution": "Verteilung",
+    "monthlyView": "Monatsansicht",
+    "breakdown": "Aufschlüsselung",
+    "emptyState": "Bitte gib ein Bruttoeinkommen größer als 0 ein.",
+    "resultsAriaLabel": "Ergebnisse"
+  },
+  "chart": {
+    "pieCaption": "Gehaltsaufteilung als Kreisdiagramm",
+    "pieTableCaption": "Monatliche Gehaltsaufteilung",
+    "barCaption": "Monatliche Aufschlüsselung als Balkendiagramm",
+    "category": "Kategorie",
+    "amount": "Betrag",
+    "percentage": "Prozent",
+    "ofGross": "vom Brutto",
+    "monthlyCategory": "Monatlich",
+    "netto": "Netto",
+    "marginalCaption": "Grenzbelastung nach Einkommen",
+    "marginalXAxisAnnual": "Bruttoeinkommen (jährlich)",
+    "marginalXAxisMonthly": "Bruttoeinkommen (monatlich)",
+    "marginalTitle": "Grenzbelastung",
+    "incomeBreakdownCaption": "Netto und Abzüge nach Einkommen",
+    "incomeBreakdownXAxisAnnual": "Bruttoeinkommen (jährlich)",
+    "incomeBreakdownXAxisMonthly": "Bruttoeinkommen (monatlich)",
+    "incomeBreakdownTitle": "Netto und Abzüge",
+    "incomeBreakdownInfo": "Zeigt, wie sich dein Gehalt bei verschiedenen Bruttoeinkommen auf Netto und einzelne Abzüge aufteilt. Die gestrichelte Linie markiert dein aktuelles Einkommen.",
+    "marginalInfo": "Zeigt, wie viel von jedem zusätzlich verdienten Euro an Steuern und Abgaben abgeht. Bei hohem Einkommen sinkt der Netto-Anteil, weil der Steuersatz steigt. Sozialversicherungen sind ab der Beitragsbemessungsgrenze gedeckelt.",
+    "taxClassTitle": "Steuerklassen-Vergleich",
+    "taxClassInfo": "Vergleicht dein Nettoeinkommen über alle sechs Steuerklassen bei gleichen Eingaben. Deine aktuelle Steuerklasse ist hervorgehoben.",
+    "taxClassCaption": "Nettoeinkommen je Klasse als Balkendiagramm",
+    "taxClassCurrent": "Aktuell",
+    "taxClassDifference": "Differenz",
+    "effectiveRateTitle": "Effektiver vs. Grenzsteuersatz",
+    "effectiveRateInfo": "Effektiver Steuersatz: welcher Anteil deines gesamten Einkommens an Abgaben geht. Grenzsteuersatz: welcher Anteil jedes zusätzlich verdienten Euros abgezogen wird. Die beiden Sätze können sich kreuzen, z.B. bei PKV oder Steuerklasse 6.",
+    "effectiveRateCaption": "Effektiver und Grenzsteuersatz nach Einkommen",
+    "effectiveLine": "Effektiver Steuersatz",
+    "marginalLine": "Grenzsteuersatz",
+    "insuranceTitle": "GKV vs. PKV Vergleich",
+    "insuranceInfo": "Vergleicht dein Nettoeinkommen bei gesetzlicher (GKV) und privater (PKV) Krankenversicherung über verschiedene Bruttoeinkommen. Die Linien können sich kreuzen, weil GKV-Beiträge einkommensabhängig sind, PKV-Beiträge jedoch fest.",
+    "insuranceCaption": "Nettoeinkommen bei GKV und PKV nach Bruttoeinkommen",
+    "gkvLabel": "GKV (Gesetzlich)",
+    "pkvLabel": "PKV (Privat)",
+    "insuranceDifference": "Differenz",
+    "insurancePkvInput": "PKV Eigenbeitrag (EUR/Monat)",
+    "insuranceGkvInput": "GKV Zusatzbeitrag (%)"
+  },
+  "table": {
+    "deduction": "Abzug",
+    "employee": "Arbeitnehmer",
+    "employer": "Arbeitgeber",
+    "total": "Gesamt",
+    "percentOfGross": "% vom Brutto",
+    "totalDeductions": "Gesamt Abzüge",
+    "netto": "Netto",
+    "ariaLabel": "Detaillierte Aufschlüsselung",
+    "tableAriaLabel": "Aufschlüsselung der Abzüge",
+    "info": "Arbeitnehmer zeigt deinen Anteil, Arbeitgeber den Anteil deines Arbeitgebers. Gesamt Abzüge ist die Summe aller Abzüge vom Brutto. Netto ist das, was auf deinem Konto ankommt."
+  },
+  "deductions": {
+    "Lohnsteuer": "Lohnsteuer",
+    "Solidaritätszuschlag": "Solidaritätszuschlag",
+    "Kirchensteuer": "Kirchensteuer",
+    "Krankenversicherung": "Krankenversicherung",
+    "Pflegeversicherung": "Pflegeversicherung",
+    "Rentenversicherung": "Rentenversicherung",
+    "Arbeitslosenversicherung": "Arbeitslosenversicherung"
+  },
+  "shortLabels": {
+    "Krankenversicherung": "KV",
+    "Pflegeversicherung": "PV",
+    "Rentenversicherung": "RV",
+    "Arbeitslosenversicherung": "AV",
+    "Kirchensteuer": "KiSt",
+    "Lohnsteuer": "LSt",
+    "Soli": "Soli",
+    "Netto": "Netto"
+  },
+  "lang": {
+    "toggle": "Sprache",
+    "code": "de",
+    "ariaLabel": "Sprache wählen"
+  },
+  "theme": {
+    "toggle": "Design wechseln"
+  }
+}

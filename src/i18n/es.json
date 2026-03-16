@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "title": "Calculadora bruto-neto | Calculadora salarial para Alemania",
+    "description": "Calcula tu salario neto a partir del bruto. Incluye impuesto sobre la renta, recargo de solidaridad y todas las cotizaciones sociales."
+  },
+  "header": {
+    "title": "Calculadora bruto-neto",
+    "subtitle": "Calculadora salarial para Alemania",
+    "skipLink": "Ir a la calculadora"
+  },
+  "footer": {
+    "disclaimer": "Aviso: Esta calculadora es solo orientativa y no sustituye el asesoramiento fiscal. Los resultados son aproximados y pueden diferir de la liquidaci\u00f3n real.",
+    "copyright": "Calculadora bruto-neto \u00b7 Sin garant\u00eda sobre la exactitud de los c\u00e1lculos."
+  },
+  "input": {
+    "heading": "Datos",
+    "taxYear": "A\u00f1o fiscal",
+    "grossIncome": "Salario bruto (EUR)",
+    "salaryPeriod": "Periodo salarial",
+    "annual": "Anual",
+    "monthly": "Mensual",
+    "taxClass": "Clase fiscal",
+    "taxClassOption": "Clase fiscal",
+    "state": "Estado federal",
+    "churchMember": "Miembro de iglesia",
+    "churchMemberAria": "Miembro de iglesia",
+    "childrenCount": "Hijos",
+    "age": "Edad",
+    "healthInsurance": "Seguro m\u00e9dico",
+    "healthPublic": "P\u00fablico (GKV)",
+    "healthPrivate": "Privado (PKV)",
+    "additionalContribution": "Cotizaci\u00f3n adicional (%)",
+    "pkvMonthly": "Prima propia PKV mensual (EUR)",
+    "formAriaLabel": "Formulario de la calculadora fiscal"
+  },
+  "results": {
+    "heading": "Resultados",
+    "grossMonthly": "Bruto / mes",
+    "deductionsMonthly": "Deducciones / mes",
+    "netMonthly": "Neto / mes",
+    "perYear": "/ a\u00f1o",
+    "distribution": "Distribuci\u00f3n",
+    "monthlyView": "Vista mensual",
+    "breakdown": "Desglose",
+    "emptyState": "Introduce un salario bruto mayor que 0.",
+    "resultsAriaLabel": "Resultados"
+  },
+  "chart": {
+    "pieCaption": "Distribuci\u00f3n salarial en gr\u00e1fico circular",
+    "pieTableCaption": "Desglose salarial mensual",
+    "barCaption": "Desglose mensual en gr\u00e1fico de barras",
+    "category": "Categor\u00eda",
+    "amount": "Importe",
+    "percentage": "Porcentaje",
+    "ofGross": "del bruto",
+    "monthlyCategory": "Mensual",
+    "netto": "Neto",
+    "marginalCaption": "Carga marginal por nivel de ingresos",
+    "marginalXAxisAnnual": "Salario bruto (anual)",
+    "marginalXAxisMonthly": "Salario bruto (mensual)",
+    "marginalTitle": "Carga marginal",
+    "incomeBreakdownCaption": "Neto y deducciones por nivel de ingresos",
+    "incomeBreakdownXAxisAnnual": "Salario bruto (anual)",
+    "incomeBreakdownXAxisMonthly": "Salario bruto (mensual)",
+    "incomeBreakdownTitle": "Neto y deducciones",
+    "incomeBreakdownInfo": "Muestra la distribuci\u00f3n de tu salario entre neto y deducciones a distintos niveles de ingreso bruto. La l\u00ednea discontinua indica tu ingreso actual.",
+    "marginalInfo": "Muestra qu\u00e9 parte de cada euro adicional se destina a impuestos y cotizaciones. A mayor ingreso, la parte neta disminuye por el aumento del tipo impositivo. Las cotizaciones sociales tienen un tope m\u00e1ximo.",
+    "taxClassTitle": "Comparaci\u00f3n de clases fiscales",
+    "taxClassInfo": "Compara tu ingreso neto en las seis clases fiscales con los mismos datos. Tu clase fiscal actual est\u00e1 resaltada.",
+    "taxClassCaption": "Ingreso neto por clase fiscal como gr\u00e1fico de barras",
+    "taxClassCurrent": "Actual",
+    "taxClassDifference": "Diferencia",
+    "effectiveRateTitle": "Tipo efectivo vs. marginal",
+    "effectiveRateInfo": "Tipo efectivo: qu\u00e9 porcentaje de tu ingreso total va a deducciones. Tipo marginal: qu\u00e9 porcentaje de cada euro adicional se deduce. Ambos tipos pueden cruzarse, p. ej. con PKV o clase fiscal 6.",
+    "effectiveRateCaption": "Tipo efectivo y marginal seg\u00fan ingresos",
+    "effectiveLine": "Tipo efectivo",
+    "marginalLine": "Tipo marginal",
+    "insuranceTitle": "Comparaci\u00f3n GKV vs. PKV",
+    "insuranceInfo": "Compara tu ingreso neto con seguro m\u00e9dico p\u00fablico (GKV) y privado (PKV) a distintos niveles de salario bruto. Las l\u00edneas pueden cruzarse porque las cotizaciones del GKV dependen del ingreso, mientras que las del PKV son fijas.",
+    "insuranceCaption": "Ingreso neto con GKV y PKV seg\u00fan salario bruto",
+    "gkvLabel": "GKV (P\u00fablico)",
+    "pkvLabel": "PKV (Privado)",
+    "insuranceDifference": "Diferencia",
+    "insurancePkvInput": "Prima propia PKV (EUR/mes)",
+    "insuranceGkvInput": "Cotizaci\u00f3n adicional GKV (%)"
+  },
+  "table": {
+    "deduction": "Deducci\u00f3n",
+    "employee": "Empleado",
+    "employer": "Empleador",
+    "total": "Total",
+    "percentOfGross": "% del bruto",
+    "totalDeductions": "Total deducciones",
+    "netto": "Neto",
+    "ariaLabel": "Desglose detallado",
+    "tableAriaLabel": "Desglose de deducciones",
+    "info": "Empleado muestra tu parte, Empleador la de tu empresa. Total deducciones es la suma de todas las deducciones del bruto. Neto es lo que llega a tu cuenta."
+  },
+  "deductions": {
+    "Lohnsteuer": "Impuesto sobre la renta",
+    "Solidarit\u00e4tszuschlag": "Recargo de solidaridad",
+    "Kirchensteuer": "Impuesto eclesi\u00e1stico",
+    "Krankenversicherung": "Seguro m\u00e9dico",
+    "Pflegeversicherung": "Seguro de dependencia",
+    "Rentenversicherung": "Seguro de pensiones",
+    "Arbeitslosenversicherung": "Seguro de desempleo"
+  },
+  "shortLabels": {
+    "Krankenversicherung": "KV",
+    "Pflegeversicherung": "PV",
+    "Rentenversicherung": "RV",
+    "Arbeitslosenversicherung": "AV",
+    "Kirchensteuer": "KiSt",
+    "Lohnsteuer": "LSt",
+    "Soli": "Soli",
+    "Netto": "Neto"
+  },
+  "lang": {
+    "toggle": "Idioma",
+    "code": "es",
+    "ariaLabel": "Elegir idioma"
+  },
+  "theme": {
+    "toggle": "Cambiar tema"
+  }
+}

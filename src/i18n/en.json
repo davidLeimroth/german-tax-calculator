@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "title": "Gross-Net Calculator | Salary Calculator for Germany",
+    "description": "Calculate your net salary from gross income. Including income tax, solidarity surcharge and all social insurance contributions."
+  },
+  "header": {
+    "title": "Gross-Net Calculator",
+    "subtitle": "Salary Calculator for Germany",
+    "skipLink": "Skip to calculator"
+  },
+  "footer": {
+    "disclaimer": "Note: This calculator is for informational purposes only and does not constitute tax advice. The results are approximations and may differ from the actual payroll.",
+    "copyright": "Gross-Net Calculator \u00b7 No guarantee for the accuracy of the calculations."
+  },
+  "input": {
+    "heading": "Inputs",
+    "taxYear": "Tax Year",
+    "grossIncome": "Gross Income (EUR)",
+    "salaryPeriod": "Salary period",
+    "annual": "Annual",
+    "monthly": "Monthly",
+    "taxClass": "Tax Class",
+    "taxClassOption": "Tax Class",
+    "state": "Federal State",
+    "churchMember": "Church member",
+    "churchMemberAria": "Church member",
+    "childrenCount": "Number of Children",
+    "age": "Age",
+    "healthInsurance": "Health Insurance",
+    "healthPublic": "Public (GKV)",
+    "healthPrivate": "Private (PKV)",
+    "additionalContribution": "Additional Contribution (%)",
+    "pkvMonthly": "PKV Employee Premium (EUR/month)",
+    "formAriaLabel": "Tax calculator input form"
+  },
+  "results": {
+    "heading": "Results",
+    "grossMonthly": "Gross / Month",
+    "deductionsMonthly": "Deductions / Month",
+    "netMonthly": "Net / Month",
+    "perYear": "/ Year",
+    "distribution": "Distribution",
+    "monthlyView": "Monthly View",
+    "breakdown": "Breakdown",
+    "emptyState": "Please enter a gross income greater than 0.",
+    "resultsAriaLabel": "Results"
+  },
+  "chart": {
+    "pieCaption": "Salary breakdown pie chart",
+    "pieTableCaption": "Monthly salary breakdown",
+    "barCaption": "Monthly breakdown bar chart",
+    "category": "Category",
+    "amount": "Amount",
+    "percentage": "Percentage",
+    "ofGross": "of gross",
+    "monthlyCategory": "Monthly",
+    "netto": "Net",
+    "marginalCaption": "Marginal burden by income",
+    "marginalXAxisAnnual": "Gross income (annual)",
+    "marginalXAxisMonthly": "Gross income (monthly)",
+    "marginalTitle": "Marginal burden",
+    "incomeBreakdownCaption": "Net income and deductions by gross income",
+    "incomeBreakdownXAxisAnnual": "Gross income (annual)",
+    "incomeBreakdownXAxisMonthly": "Gross income (monthly)",
+    "incomeBreakdownTitle": "Net income and deductions",
+    "incomeBreakdownInfo": "Shows how your salary splits into net pay and individual deductions at different gross income levels. The dashed line marks your current income.",
+    "marginalInfo": "Shows how much of each additional euro earned goes to taxes and contributions. At higher income, the net share decreases as the tax rate rises. Social insurance contributions are capped at the assessment ceiling.",
+    "taxClassTitle": "Tax Class Comparison",
+    "taxClassInfo": "Compares your net income across all six tax classes with the same settings. Your current tax class is highlighted.",
+    "taxClassCaption": "Net income by tax class as bar chart",
+    "taxClassCurrent": "Current",
+    "taxClassDifference": "Difference",
+    "effectiveRateTitle": "Effective vs. Marginal Rate",
+    "effectiveRateInfo": "Effective rate: what percentage of your total income goes to deductions. Marginal rate: what percentage of each additional euro is deducted. The two rates can cross, e.g. with PKV or tax class 6.",
+    "effectiveRateCaption": "Effective and marginal tax rate by income",
+    "effectiveLine": "Effective Rate",
+    "marginalLine": "Marginal Rate",
+    "insuranceTitle": "GKV vs. PKV Comparison",
+    "insuranceInfo": "Compares your net income with public (GKV) and private (PKV) health insurance across different gross incomes. The lines may cross because GKV contributions are income-dependent while PKV premiums are fixed.",
+    "insuranceCaption": "Net income with GKV and PKV by gross income",
+    "gkvLabel": "GKV (Public)",
+    "pkvLabel": "PKV (Private)",
+    "insuranceDifference": "Difference",
+    "insurancePkvInput": "PKV employee premium (EUR/month)",
+    "insuranceGkvInput": "GKV additional contribution (%)"
+  },
+  "table": {
+    "deduction": "Deduction",
+    "employee": "Employee",
+    "employer": "Employer",
+    "total": "Total",
+    "percentOfGross": "% of Gross",
+    "totalDeductions": "Total Deductions",
+    "netto": "Net",
+    "ariaLabel": "Detailed breakdown",
+    "tableAriaLabel": "Deductions breakdown",
+    "info": "Employee shows your share, Employer shows your employer's share. Total Deductions is the sum of all deductions from gross. Net is what lands in your bank account."
+  },
+  "deductions": {
+    "Lohnsteuer": "Income Tax",
+    "Solidaritätszuschlag": "Solidarity Surcharge",
+    "Kirchensteuer": "Church Tax",
+    "Krankenversicherung": "Health Insurance",
+    "Pflegeversicherung": "Long-term Care Insurance",
+    "Rentenversicherung": "Pension Insurance",
+    "Arbeitslosenversicherung": "Unemployment Insurance"
+  },
+  "shortLabels": {
+    "Krankenversicherung": "KV",
+    "Pflegeversicherung": "PV",
+    "Rentenversicherung": "RV",
+    "Arbeitslosenversicherung": "AV",
+    "Kirchensteuer": "KiSt",
+    "Lohnsteuer": "LSt",
+    "Soli": "Soli",
+    "Netto": "Net"
+  },
+  "lang": {
+    "toggle": "Language",
+    "code": "en",
+    "ariaLabel": "Select language"
+  },
+  "theme": {
+    "toggle": "Toggle theme"
+  }
+}
