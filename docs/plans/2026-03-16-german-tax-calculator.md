@@ -45,18 +45,18 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 - Create: `src/lib/tax-engine.ts`, `src/lib/types.ts`, `src/lib/constants.ts`
 - Create: `src/lib/__tests__/tax-engine.test.ts`
 
-- [ ] Define TypeScript types for calculator input (gross salary, tax class, church tax, state, children, health insurance type, etc.) and output (all deductions + net)
-- [ ] Define 2025/2026 constants: income tax brackets, solidarity surcharge threshold, social insurance rates and contribution ceilings (Beitragsbemessungsgrenzen)
-- [ ] Implement Lohnsteuer calculation using the German progressive tax formula (Einkommensteuer-Grundtabelle/Splittingtabelle based on tax class)
-- [ ] Implement Solidaritaetszuschlag (5.5% of Lohnsteuer, with Freigrenze)
-- [ ] Implement Kirchensteuer (8% or 9% of Lohnsteuer depending on state)
-- [ ] Implement Krankenversicherung (gesetzlich: 14.6% + average Zusatzbeitrag, split employer/employee; or privat: fixed amount)
-- [ ] Implement Pflegeversicherung (3.4% base rate, surcharges for childless over 23, discounts for multiple children)
-- [ ] Implement Rentenversicherung (18.6% split, up to Beitragsbemessungsgrenze West/Ost)
-- [ ] Implement Arbeitslosenversicherung (2.6% split, up to BBG)
-- [ ] Create a main `calculateNetSalary()` function that orchestrates all calculations and returns a full breakdown
-- [ ] Write comprehensive tests covering all tax classes, edge cases (mini-job threshold, BBG limits, Soli Freigrenze), and known reference values
-- [ ] Run project test suite - must pass before task 3
+- [x] Define TypeScript types for calculator input (gross salary, tax class, church tax, state, children, health insurance type, etc.) and output (all deductions + net)
+- [x] Define 2025/2026 constants: income tax brackets, solidarity surcharge threshold, social insurance rates and contribution ceilings (Beitragsbemessungsgrenzen)
+- [x] Implement Lohnsteuer calculation using the German progressive tax formula (Einkommensteuer-Grundtabelle/Splittingtabelle based on tax class)
+- [x] Implement Solidaritaetszuschlag (5.5% of Lohnsteuer, with Freigrenze)
+- [x] Implement Kirchensteuer (8% or 9% of Lohnsteuer depending on state)
+- [x] Implement Krankenversicherung (gesetzlich: 14.6% + average Zusatzbeitrag, split employer/employee; or privat: fixed amount)
+- [x] Implement Pflegeversicherung (3.4% base rate, surcharges for childless over 23, discounts for multiple children)
+- [x] Implement Rentenversicherung (18.6% split, up to Beitragsbemessungsgrenze West/Ost)
+- [x] Implement Arbeitslosenversicherung (2.6% split, up to BBG)
+- [x] Create a main `calculateNetSalary()` function that orchestrates all calculations and returns a full breakdown
+- [x] Write comprehensive tests covering all tax classes, edge cases (mini-job threshold, BBG limits, Soli Freigrenze), and known reference values
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Calculator input form with TanStack Form
 
