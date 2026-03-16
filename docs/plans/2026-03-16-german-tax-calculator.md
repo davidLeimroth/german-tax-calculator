@@ -104,14 +104,14 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 **Files:**
 - Modify: `src/layouts/Layout.astro`, `src/components/TaxCalculator.tsx`, `src/pages/index.astro`
 
-- [ ] Add dark/light theme toggle using DaisyUI themes (store preference in localStorage)
-- [ ] Add a header with app title and brief description
-- [ ] Add a footer with disclaimer (no legal advice, approximate calculations)
-- [ ] Ensure full mobile responsiveness: stacked layout on small screens, side-by-side on desktop
-- [ ] Add smooth transitions between theme changes and data updates
-- [ ] Add SEO meta tags and Open Graph tags for sharing
-- [ ] Write tests for theme toggle persistence and responsive layout breakpoints
-- [ ] Run project test suite - must pass before task 7
+- [x] Add dark/light theme toggle using DaisyUI themes (store preference in localStorage)
+- [x] Add a header with app title and brief description
+- [x] Add a footer with disclaimer (no legal advice, approximate calculations)
+- [x] Ensure full mobile responsiveness: stacked layout on small screens, side-by-side on desktop
+- [x] Add smooth transitions between theme changes and data updates
+- [x] Add SEO meta tags and Open Graph tags for sharing
+- [x] Write tests for theme toggle persistence and responsive layout breakpoints
+- [x] Run project test suite - must pass before task 7
 
 ### Task 7: Verify acceptance criteria
 

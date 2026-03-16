@@ -1,11 +1,37 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import TaxCalculator from '../components/TaxCalculator';
+import ThemeToggle from '../components/ThemeToggle';
 ---
 
 <Layout>
-  <main class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-center mb-8">Brutto-Netto-Rechner</h1>
-    <TaxCalculator client:load />
-  </main>
+  <div class="flex flex-col min-h-screen">
+    <header class="navbar bg-base-100 shadow-sm">
+      <div class="container mx-auto px-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold">Brutto-Netto-Rechner</h1>
+          <p class="text-xs text-base-content/60 hidden sm:block">
+            Gehaltsrechner fuer Deutschland 2025/2026
+          </p>
+        </div>
+        <ThemeToggle client:load />
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-1">
+      <TaxCalculator client:load />
+    </main>
+
+    <footer class="bg-base-100 border-t border-base-300 py-6 mt-8">
+      <div class="container mx-auto px-4 text-center text-sm text-base-content/60">
+        <p>
+          Hinweis: Dieser Rechner dient nur zur Orientierung und stellt keine Steuerberatung dar.
+          Die Ergebnisse sind Naeherungswerte und koennen von der tatsaechlichen Abrechnung abweichen.
+        </p>
+        <p class="mt-2">
+          &copy; {new Date().getFullYear()} Brutto-Netto-Rechner &middot; Keine Gewaehr fuer die Richtigkeit der Berechnungen.
+        </p>
+      </div>
+    </footer>
+  </div>
 </Layout>
