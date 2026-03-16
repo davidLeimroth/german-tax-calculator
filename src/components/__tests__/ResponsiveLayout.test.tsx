@@ -1,10 +1,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import TaxCalculator from '../TaxCalculator';
+import { I18nWrapper } from '../../test/i18n-wrapper';
 
 describe('Responsive layout', () => {
   it('uses stacked layout on mobile and side-by-side on desktop via Tailwind classes', () => {
-    const { container } = render(<TaxCalculator />);
+    const { container } = render(<TaxCalculator />, { wrapper: I18nWrapper });
     const layout = container.firstElementChild;
 
     expect(layout?.className).toContain('flex-col');
@@ -12,7 +13,7 @@ describe('Responsive layout', () => {
   });
 
   it('form column uses full width on mobile and 1/3 on desktop', () => {
-    const { container } = render(<TaxCalculator />);
+    const { container } = render(<TaxCalculator />, { wrapper: I18nWrapper });
     const formColumn = container.querySelector('.lg\\:w-1\\/3');
 
     expect(formColumn).toBeInTheDocument();
@@ -21,7 +22,7 @@ describe('Responsive layout', () => {
   });
 
   it('results column uses full width on mobile and 2/3 on desktop', () => {
-    const { container } = render(<TaxCalculator />);
+    const { container } = render(<TaxCalculator />, { wrapper: I18nWrapper });
     const resultsColumn = container.querySelector('.lg\\:w-2\\/3');
 
     expect(resultsColumn).toBeInTheDocument();
@@ -30,20 +31,20 @@ describe('Responsive layout', () => {
   });
 
   it('stats section is vertical on mobile and horizontal on desktop', () => {
-    render(<TaxCalculator />);
+    render(<TaxCalculator />, { wrapper: I18nWrapper });
     const stats = document.querySelector('.stats');
 
     expect(stats?.className).toContain('stats-vertical');
     expect(stats?.className).toContain('lg:stats-horizontal');
   });
 
-  it('cards have smooth transition classes for theme changes', () => {
-    const { container } = render(<TaxCalculator />);
+  it('cards use consistent DaisyUI shadow', () => {
+    const { container } = render(<TaxCalculator />, { wrapper: I18nWrapper });
     const cards = container.querySelectorAll('.card');
 
     cards.forEach((card) => {
-      expect(card.className).toContain('transition-colors');
-      expect(card.className).toContain('duration-300');
+      expect(card.className).toContain('shadow');
+      expect(card.className).toContain('bg-base-100');
     });
   });
 });

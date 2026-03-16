@@ -4,10 +4,13 @@ import { describe, it, expect } from 'vitest';
 import BreakdownTable from '../BreakdownTable';
 import { calculateNetSalary } from '../../lib/tax-engine';
 import type { TaxResult } from '../../lib/types';
+import { I18nWrapper } from '../../test/i18n-wrapper';
 
 function getSampleResult(): TaxResult {
   return calculateNetSalary({
-    annualGrossSalary: 50000,
+    grossSalary: 50000,
+    salaryMode: 'annual',
+    taxYear: 2025,
     taxClass: 1,
     state: 'Bayern',
     churchMember: false,
@@ -21,9 +24,9 @@ function getSampleResult(): TaxResult {
 describe('BreakdownTable', () => {
   it('renders the table with correct column headers', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
-    const table = screen.getByRole('table', { name: /Deductions breakdown/ });
+    const table = screen.getByRole('table', { name: /Aufschlüsselung der Abzüge/ });
     expect(table).toBeInTheDocument();
 
     expect(screen.getByText('Abzug')).toBeInTheDocument();
@@ -35,7 +38,7 @@ describe('BreakdownTable', () => {
 
   it('renders rows for each non-zero deduction', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     expect(screen.getByText('Lohnsteuer')).toBeInTheDocument();
     expect(screen.getByText('Krankenversicherung')).toBeInTheDocument();
@@ -46,7 +49,7 @@ describe('BreakdownTable', () => {
 
   it('does not render rows for zero-value deductions', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     // No church tax for non-member
     const rows = screen.getAllByRole('row');
@@ -57,14 +60,14 @@ describe('BreakdownTable', () => {
 
   it('shows summary row for total deductions', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
-    expect(screen.getByText('Gesamt Abzuege')).toBeInTheDocument();
+    expect(screen.getByText('Gesamt Abzüge')).toBeInTheDocument();
   });
 
   it('shows net salary summary row', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     // The Netto row in the footer
     const tfoot = screen.getByRole('table').querySelector('tfoot');
@@ -74,7 +77,7 @@ describe('BreakdownTable', () => {
 
   it('displays correct percentage values', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     // All percentage cells should contain a % sign
     const cells = screen.getAllByText(/%/);
@@ -84,7 +87,7 @@ describe('BreakdownTable', () => {
   it('supports column sorting by clicking headers', async () => {
     const user = userEvent.setup();
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     // Click the "Arbeitnehmer" header to sort
     const employeeHeader = screen.getByText('Arbeitnehmer');
@@ -107,21 +110,23 @@ describe('BreakdownTable', () => {
 
   it('renders with responsive overflow wrapper', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
-    const wrapper = screen.getByRole('region', { name: /Detaillierte Aufschluesselung/ });
+    const wrapper = screen.getByRole('region', { name: /Detaillierte Aufschlüsselung/ });
     expect(wrapper.className).toContain('overflow-x-auto');
   });
 
   it('updates when result prop changes', () => {
     const result1 = getSampleResult();
-    const { rerender } = render(<BreakdownTable result={result1} />);
+    const { rerender } = render(<BreakdownTable result={result1} />, { wrapper: I18nWrapper });
 
     const tfoot1 = screen.getByRole('table').querySelector('tfoot');
     const nettoText1 = within(tfoot1!).getByText('Netto').closest('tr')?.textContent;
 
     const result2 = calculateNetSalary({
-      annualGrossSalary: 80000,
+      grossSalary: 80000,
+      salaryMode: 'annual',
+      taxYear: 2025,
       taxClass: 1,
       state: 'Bayern',
       churchMember: false,
@@ -130,7 +135,11 @@ describe('BreakdownTable', () => {
       zusatzbeitragRate: 0.017,
       age: 30,
     });
-    rerender(<BreakdownTable result={result2} />);
+    rerender(
+      <I18nWrapper>
+        <BreakdownTable result={result2} />
+      </I18nWrapper>
+    );
 
     const tfoot2 = screen.getByRole('table').querySelector('tfoot');
     const nettoText2 = within(tfoot2!).getByText('Netto').closest('tr')?.textContent;
@@ -140,7 +149,7 @@ describe('BreakdownTable', () => {
 
   it('shows employer share columns with correct values', () => {
     const result = getSampleResult();
-    render(<BreakdownTable result={result} />);
+    render(<BreakdownTable result={result} />, { wrapper: I18nWrapper });
 
     // Rentenversicherung should have employer share > 0
     const rvRow = screen.getByText('Rentenversicherung').closest('tr');

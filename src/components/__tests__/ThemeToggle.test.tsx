@@ -1,16 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import ThemeToggle from '../ThemeToggle';
+import { I18nWrapper } from '../../test/i18n-wrapper';
 
 describe('ThemeToggle', () => {
   beforeEach(() => {
+    cleanup();
     localStorage.clear();
     document.documentElement.setAttribute('data-theme', 'light');
   });
 
   it('renders toggle with sun/moon icons', () => {
-    render(<ThemeToggle />);
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
     const toggle = screen.getByTestId('theme-toggle');
     expect(toggle).toBeInTheDocument();
     expect(toggle).not.toBeChecked();
@@ -18,7 +20,7 @@ describe('ThemeToggle', () => {
 
   it('toggles from light to dark on click', async () => {
     const user = userEvent.setup();
-    render(<ThemeToggle />);
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
 
     const toggle = screen.getByTestId('theme-toggle');
     await user.click(toggle);
@@ -30,7 +32,7 @@ describe('ThemeToggle', () => {
 
   it('toggles back to light on second click', async () => {
     const user = userEvent.setup();
-    render(<ThemeToggle />);
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
 
     const toggle = screen.getByTestId('theme-toggle');
     await user.click(toggle);
@@ -43,7 +45,7 @@ describe('ThemeToggle', () => {
 
   it('restores theme from localStorage on mount', () => {
     localStorage.setItem('theme', 'dark');
-    render(<ThemeToggle />);
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
 
     const toggle = screen.getByTestId('theme-toggle');
     expect(toggle).toBeChecked();
@@ -51,7 +53,7 @@ describe('ThemeToggle', () => {
   });
 
   it('defaults to light when localStorage is empty', () => {
-    render(<ThemeToggle />);
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
 
     const toggle = screen.getByTestId('theme-toggle');
     expect(toggle).not.toBeChecked();
@@ -59,7 +61,7 @@ describe('ThemeToggle', () => {
   });
 
   it('has accessible label', () => {
-    render(<ThemeToggle />);
-    expect(screen.getByLabelText('Toggle theme')).toBeInTheDocument();
+    render(<ThemeToggle />, { wrapper: I18nWrapper });
+    expect(screen.getByLabelText('Design wechseln')).toBeInTheDocument();
   });
 });

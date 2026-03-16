@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import SalaryChart from '../SalaryChart';
 import { calculateNetSalary } from '../../lib/tax-engine';
 import type { TaxResult } from '../../lib/types';
+import { I18nWrapper } from '../../test/i18n-wrapper';
 
 // Mock Nivo's ResponsivePie since it requires a real DOM with dimensions
 vi.mock('@nivo/pie', () => ({
@@ -19,7 +20,9 @@ vi.mock('@nivo/pie', () => ({
 
 function getSampleResult(): TaxResult {
   return calculateNetSalary({
-    annualGrossSalary: 50000,
+    grossSalary: 50000,
+    salaryMode: 'annual',
+    taxYear: 2025,
     taxClass: 1,
     state: 'Bayern',
     churchMember: false,
@@ -33,13 +36,13 @@ function getSampleResult(): TaxResult {
 describe('SalaryChart', () => {
   it('renders the pie chart container', () => {
     const result = getSampleResult();
-    render(<SalaryChart result={result} />);
-    expect(screen.getByRole('img', { name: /Salary breakdown pie chart/ })).toBeInTheDocument();
+    render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
+    expect(screen.getByRole('figure', { name: /Gehaltsaufteilung als Kreisdiagramm/ })).toBeInTheDocument();
   });
 
   it('renders pie slices for all non-zero deductions', () => {
     const result = getSampleResult();
-    render(<SalaryChart result={result} />);
+    render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
 
     expect(screen.getByTestId('pie-slice-Netto')).toBeInTheDocument();
     expect(screen.getByTestId('pie-slice-Lohnsteuer')).toBeInTheDocument();
@@ -52,13 +55,15 @@ describe('SalaryChart', () => {
   it('does not render slices for zero-value items', () => {
     const result = getSampleResult();
     // No church member -> no Kirchensteuer
-    render(<SalaryChart result={result} />);
+    render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
     expect(screen.queryByTestId('pie-slice-Kirchensteuer')).not.toBeInTheDocument();
   });
 
   it('includes Kirchensteuer slice when church member', () => {
     const result = calculateNetSalary({
-      annualGrossSalary: 50000,
+      grossSalary: 50000,
+      salaryMode: 'annual',
+      taxYear: 2025,
       taxClass: 1,
       state: 'Bayern',
       churchMember: true,
@@ -67,17 +72,19 @@ describe('SalaryChart', () => {
       zusatzbeitragRate: 0.017,
       age: 30,
     });
-    render(<SalaryChart result={result} />);
+    render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
     expect(screen.getByTestId('pie-slice-Kirchensteuer')).toBeInTheDocument();
   });
 
   it('updates when result prop changes', () => {
     const result1 = getSampleResult();
-    const { rerender } = render(<SalaryChart result={result1} />);
+    const { rerender } = render(<SalaryChart result={result1} />, { wrapper: I18nWrapper });
     const netto1 = screen.getByTestId('pie-slice-Netto').textContent;
 
     const result2 = calculateNetSalary({
-      annualGrossSalary: 80000,
+      grossSalary: 80000,
+      salaryMode: 'annual',
+      taxYear: 2025,
       taxClass: 1,
       state: 'Bayern',
       churchMember: false,
@@ -86,7 +93,11 @@ describe('SalaryChart', () => {
       zusatzbeitragRate: 0.017,
       age: 30,
     });
-    rerender(<SalaryChart result={result2} />);
+    rerender(
+      <I18nWrapper>
+        <SalaryChart result={result2} />
+      </I18nWrapper>
+    );
     const netto2 = screen.getByTestId('pie-slice-Netto').textContent;
 
     expect(netto1).not.toBe(netto2);

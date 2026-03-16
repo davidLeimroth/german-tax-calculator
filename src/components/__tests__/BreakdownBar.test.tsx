@@ -3,14 +3,15 @@ import { describe, it, expect, vi } from 'vitest';
 import BreakdownBar from '../BreakdownBar';
 import { calculateNetSalary } from '../../lib/tax-engine';
 import type { TaxResult } from '../../lib/types';
+import { I18nWrapper } from '../../test/i18n-wrapper';
 
 // Mock Nivo's ResponsiveBar since it requires a real DOM with dimensions
 vi.mock('@nivo/bar', () => ({
   ResponsiveBar: ({ data, keys }: { data: Array<Record<string, number | string>>; keys: string[] }) => (
     <div data-testid="mock-bar-chart">
-      {keys.map((key) => (
-        <span key={key} data-testid={`bar-segment-${key}`}>
-          {key}: {data[0][key]}
+      {data.map((d, i) => (
+        <span key={i} data-testid={`bar-segment-${d.fullName || d.category}`}>
+          {d.fullName || d.category}: {keys.includes('value') ? d.value : keys.map((k) => d[k]).join(',')}
         </span>
       ))}
     </div>
@@ -19,7 +20,9 @@ vi.mock('@nivo/bar', () => ({
 
 function getSampleResult(): TaxResult {
   return calculateNetSalary({
-    annualGrossSalary: 50000,
+    grossSalary: 50000,
+    salaryMode: 'annual',
+    taxYear: 2025,
     taxClass: 1,
     state: 'Bayern',
     churchMember: false,
@@ -33,13 +36,13 @@ function getSampleResult(): TaxResult {
 describe('BreakdownBar', () => {
   it('renders the bar chart container', () => {
     const result = getSampleResult();
-    render(<BreakdownBar result={result} />);
-    expect(screen.getByRole('img', { name: /Monthly breakdown bar chart/ })).toBeInTheDocument();
+    render(<BreakdownBar result={result} />, { wrapper: I18nWrapper });
+    expect(screen.getByRole('figure', { name: /Monatliche Aufschlüsselung als Balkendiagramm/ })).toBeInTheDocument();
   });
 
   it('renders bar segments for all non-zero deductions', () => {
     const result = getSampleResult();
-    render(<BreakdownBar result={result} />);
+    render(<BreakdownBar result={result} />, { wrapper: I18nWrapper });
 
     expect(screen.getByTestId('bar-segment-Netto')).toBeInTheDocument();
     expect(screen.getByTestId('bar-segment-Lohnsteuer')).toBeInTheDocument();
@@ -50,19 +53,20 @@ describe('BreakdownBar', () => {
 
   it('does not render segments for zero-value items', () => {
     const result = getSampleResult();
-    render(<BreakdownBar result={result} />);
+    render(<BreakdownBar result={result} />, { wrapper: I18nWrapper });
     // No church member -> no Kirchensteuer
     expect(screen.queryByTestId('bar-segment-Kirchensteuer')).not.toBeInTheDocument();
-    // Soli may or may not be zero depending on income level
   });
 
   it('updates when result prop changes', () => {
     const result1 = getSampleResult();
-    const { rerender } = render(<BreakdownBar result={result1} />);
+    const { rerender } = render(<BreakdownBar result={result1} />, { wrapper: I18nWrapper });
     const netto1 = screen.getByTestId('bar-segment-Netto').textContent;
 
     const result2 = calculateNetSalary({
-      annualGrossSalary: 80000,
+      grossSalary: 80000,
+      salaryMode: 'annual',
+      taxYear: 2025,
       taxClass: 1,
       state: 'Bayern',
       churchMember: false,
@@ -71,7 +75,11 @@ describe('BreakdownBar', () => {
       zusatzbeitragRate: 0.017,
       age: 30,
     });
-    rerender(<BreakdownBar result={result2} />);
+    rerender(
+      <I18nWrapper>
+        <BreakdownBar result={result2} />
+      </I18nWrapper>
+    );
     const netto2 = screen.getByTestId('bar-segment-Netto').textContent;
 
     expect(netto1).not.toBe(netto2);
