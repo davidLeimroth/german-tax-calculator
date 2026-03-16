@@ -23,4 +23,11 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-
+# LLM / AI tooling
+.claude/
+CLAUDE.md
+.ralphex/
+.cursorrules
+.cursor/
+.copilot/
+.aider*
