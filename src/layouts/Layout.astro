@@ -1,0 +1,28 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Brutto-Netto-Rechner | German Tax Calculator',
+  description = 'Calculate your German net salary from gross income. Includes Lohnsteuer, Solidaritaetszuschlag, and all social insurance contributions.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="de" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/steuerrechner/favicon.svg" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-base-200">
+    <slot />
+  </body>
+</html>

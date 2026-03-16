@@ -29,15 +29,15 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 **Files:**
 - Create: `package.json`, `astro.config.mjs`, `tailwind.config.mjs`, `tsconfig.json`, `vitest.config.ts`, `.github/workflows/deploy.yml`, `src/pages/index.astro`, `src/layouts/Layout.astro`
 
-- [ ] Initialize Astro project with React integration (`@astrojs/react`)
-- [ ] Install dependencies: `@nivo/pie`, `@nivo/bar`, `@tanstack/react-form`, `@tanstack/react-table`, `daisyui`, `tailwindcss`, `vitest`, `@testing-library/react`
-- [ ] Configure Tailwind CSS with DaisyUI plugin and a clean theme (light/dark toggle)
-- [ ] Configure Astro for static output (`output: 'static'`) with `base` path for GitHub Pages
-- [ ] Create base Layout.astro with HTML head, meta tags, and DaisyUI theme
-- [ ] Create index.astro page with a placeholder React island
-- [ ] Set up GitHub Actions workflow for deploying to GitHub Pages on push to main
-- [ ] Write a smoke test that verifies the Astro config exports correctly
-- [ ] Run project test suite - must pass before task 2
+- [x] Initialize Astro project with React integration (`@astrojs/react`)
+- [x] Install dependencies: `@nivo/pie`, `@nivo/bar`, `@tanstack/react-form`, `@tanstack/react-table`, `daisyui`, `tailwindcss`, `vitest`, `@testing-library/react`
+- [x] Configure Tailwind CSS with DaisyUI plugin and a clean theme (light/dark toggle)
+- [x] Configure Astro for static output (`output: 'static'`) with `base` path for GitHub Pages
+- [x] Create base Layout.astro with HTML head, meta tags, and DaisyUI theme
+- [x] Create index.astro page with a placeholder React island
+- [x] Set up GitHub Actions workflow for deploying to GitHub Pages on push to main
+- [x] Write a smoke test that verifies the Astro config exports correctly
+- [x] Run project test suite - must pass before task 2
 
 ### Task 2: German tax calculation engine
 
