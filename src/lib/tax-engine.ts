@@ -1,34 +1,15 @@
-import type { Bundesland, DeductionItem, Steuerklasse, TaxInput, TaxResult } from './types';
-import {
-  AV_RATE,
-  BBG_KV_PV,
-  ENTLASTUNGSBETRAG_ADDITIONAL_CHILD,
-  ENTLASTUNGSBETRAG_ALLEINERZIEHENDE,
-  GRUNDFREIBETRAG,
-  KINDERFREIBETRAG_SOLI,
-  KV_GENERAL_RATE,
-  PV_BASE_RATE,
-  PV_CHILD_DISCOUNT,
-  PV_CHILDLESS_SURCHARGE,
-  PV_MAX_DISCOUNT_CHILDREN,
-  PV_SACHSEN_EXTRA_EMPLOYEE,
-  RV_RATE,
-  SOLI_FREIGRENZE_MARRIED,
-  SOLI_FREIGRENZE_SINGLE,
-  SOLI_MILDERUNG_RATE,
-  SOLI_RATE,
-  TAX_ZONE_2_END,
-  TAX_ZONE_3_END,
-  TAX_ZONE_4_END,
-  getArbeitnehmerPauschbetragForClass,
-  getBBGRvAv,
-  getKirchensteuerRate,
-  getSonderausgabenPauschbetragForClass,
-} from './constants';
+import type { Bundesland, DeductionItem, SalaryMode, Steuerklasse, TaxInput, TaxResult } from './types';
+import type { TaxYearConfig } from './tax-years';
+import { DEFAULT_TAX_YEAR, getTaxYearConfig } from './tax-years';
 
 /** Round to 2 decimal places (cents) */
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+/** Truncate to 2 decimal places (PAP: setScale(2, ROUND_DOWN)) */
+function trunc2(n: number): number {
+  return Math.floor(n * 100) / 100;
 }
 
 /** Round down to full euros (abrunden auf volle Euro) as required by German tax law */
@@ -36,198 +17,317 @@ function floorToEuro(n: number): number {
   return Math.floor(n);
 }
 
-/**
- * Calculate annual Einkommensteuer using the 2025 German progressive tax formula.
- * Input: zu versteuerndes Einkommen (zvE) - annual taxable income in EUR.
- * Uses the formulas from Section 32a EStG.
- */
-export function calculateEinkommensteuer(zvE: number): number {
-  const x = floorToEuro(zvE);
-  if (x <= 0) return 0;
+/** Round up to full euros (aufrunden auf volle Euro) */
+function ceilToEuro(n: number): number {
+  return Math.ceil(n);
+}
 
-  if (x <= GRUNDFREIBETRAG) {
-    // Zone 1: no tax
-    return 0;
+/** De-annualize: floor(annual_cents / 12) for monthly PAP calculation */
+function deannualizeMonthly(annualEur: number): number {
+  return Math.floor(annualEur * 100 / 12) / 100;
+}
+
+function getKirchensteuerRate(state: Bundesland, cfg: TaxYearConfig): number {
+  return cfg.kirchensteuer8States.includes(state) ? 0.08 : 0.09;
+}
+
+function getArbeitnehmerPauschbetragForClass(taxClass: Steuerklasse, cfg: TaxYearConfig): number {
+  return taxClass === 6 ? 0 : cfg.arbeitnehmerPauschbetrag;
+}
+
+function getSonderausgabenPauschbetragForClass(taxClass: Steuerklasse, cfg: TaxYearConfig): number {
+  switch (taxClass) {
+    case 3:
+      return cfg.sonderausgabenPauschbetrag * 2;
+    case 6:
+      return 0;
+    default:
+      return cfg.sonderausgabenPauschbetrag;
   }
-
-  if (x <= TAX_ZONE_2_END) {
-    // Zone 2: progressive 14% to ~24%
-    const y = (x - GRUNDFREIBETRAG) / 10000;
-    const tax = (932.3 * y + 1400) * y;
-    return floorToEuro(tax);
-  }
-
-  if (x <= TAX_ZONE_3_END) {
-    // Zone 3: progressive ~24% to 42%
-    const z = (x - TAX_ZONE_2_END) / 10000;
-    const tax = (176.64 * z + 2397) * z + 1015.13;
-    return floorToEuro(tax);
-  }
-
-  if (x <= TAX_ZONE_4_END) {
-    // Zone 4: 42%
-    const tax = 0.42 * x - 10911.92;
-    return floorToEuro(tax);
-  }
-
-  // Zone 5: 45% (Reichensteuer)
-  const tax = 0.45 * x - 19246.67;
-  return floorToEuro(tax);
 }
 
 /**
- * Compute the Pflegeversicherung employee rate based on state, children, and age.
- * Shared by both Vorsorgepauschale and the actual PV calculation.
+ * Calculate annual Einkommensteuer using the progressive tax formula (§32a EStG).
+ * This is the UPTAB method from the PAP.
+ * Input: zu versteuerndes Einkommen (zvE) - annual taxable income in EUR.
+ */
+export function calculateEinkommensteuer(zvE: number, cfg: TaxYearConfig): number {
+  const x = floorToEuro(zvE);
+  if (x <= 0) return 0;
+
+  if (x <= cfg.grundfreibetrag) {
+    return 0;
+  }
+
+  if (x <= cfg.taxZone2End) {
+    const y = (x - cfg.grundfreibetrag) / 10000;
+    return floorToEuro((cfg.zone2CoeffA * y + cfg.zone2CoeffB) * y);
+  }
+
+  if (x <= cfg.taxZone3End) {
+    const z = (x - cfg.taxZone2End) / 10000;
+    return floorToEuro((cfg.zone3CoeffA * z + cfg.zone3CoeffB) * z + cfg.zone3Constant);
+  }
+
+  if (x <= cfg.taxZone4End) {
+    return floorToEuro(cfg.zone4Rate * x - cfg.zone4Offset);
+  }
+
+  return floorToEuro(cfg.zone5Rate * x - cfg.zone5Offset);
+}
+
+/**
+ * UP5_6: Helper for the MST5_6 graduated rate method.
+ * Computes the differential tax: max(2 * (Tax(1.25*x) - Tax(0.75*x)), 0.14*x)
+ * Per PAP: § 39b Abs. 2 Satz 7 EStG
+ */
+function up5_6(zx: number, cfg: TaxYearConfig): number {
+  const x125 = floorToEuro(zx * 1.25);
+  const st1 = calculateEinkommensteuer(x125, cfg);
+
+  const x075 = floorToEuro(zx * 0.75);
+  const st2 = calculateEinkommensteuer(x075, cfg);
+
+  const diff = (st1 - st2) * 2;
+  const mist = floorToEuro(zx * 0.14);
+
+  return mist > diff ? mist : diff;
+}
+
+/**
+ * MST5_6: Tax calculation for tax classes V and VI.
+ * Uses graduated rate method per § 39b Abs. 2 Satz 7 EStG.
+ * Input X is the zvE (already divided by KZTAB, which is 1 for TC5/TC6).
+ */
+function mst5_6(x: number, cfg: TaxYearConfig): number {
+  const zzx = x;
+
+  if (zzx > cfg.w2Stkl5) {
+    // Above W2: use UP5_6 at W2 breakpoint, then add 42%/45% for excess
+    let st = up5_6(cfg.w2Stkl5, cfg);
+
+    if (zzx > cfg.w3Stkl5) {
+      // Above W3: 42% zone (W2 to W3) + 45% zone (above W3)
+      st = st + floorToEuro((cfg.w3Stkl5 - cfg.w2Stkl5) * 0.42);
+      st = st + floorToEuro((zzx - cfg.w3Stkl5) * 0.45);
+    } else {
+      // Between W2 and W3: 42% for excess above W2
+      st = st + floorToEuro((zzx - cfg.w2Stkl5) * 0.42);
+    }
+    return st;
+  } else {
+    // At or below W2: use UP5_6 directly
+    let st = up5_6(zzx, cfg);
+
+    if (zzx > cfg.w1Stkl5) {
+      // Check against alternative: UP5_6(W1) + 42% excess above W1
+      const vergl = st;
+      const hoch = up5_6(cfg.w1Stkl5, cfg) + floorToEuro((zzx - cfg.w1Stkl5) * 0.42);
+      st = hoch < vergl ? hoch : vergl;
+    }
+    return st;
+  }
+}
+
+/**
+ * Compute the Pflegeversicherung employee rate for the Vorsorgepauschale.
+ * This computes PVSATZAN per the PAP.
  */
 function computePvEmployeeRate(
   state: Bundesland,
   childrenCount: number,
   age: number,
+  cfg: TaxYearConfig,
 ): number {
-  let rate = PV_BASE_RATE / 2;
+  let rate = cfg.pvBaseRate / 2;
   if (state === 'Sachsen') {
-    rate += PV_SACHSEN_EXTRA_EMPLOYEE;
+    rate += cfg.pvSachsenExtraEmployee;
   }
   if (childrenCount === 0 && age >= 23) {
-    rate += PV_CHILDLESS_SURCHARGE;
+    rate += cfg.pvChildlessSurcharge;
   }
   if (childrenCount >= 2) {
-    const discountChildren = Math.min(childrenCount, PV_MAX_DISCOUNT_CHILDREN) - 1;
-    rate -= discountChildren * PV_CHILD_DISCOUNT;
+    const discountChildren = Math.min(childrenCount, cfg.pvMaxDiscountChildren) - 1;
+    rate -= discountChildren * cfg.pvChildDiscount;
   }
   return Math.max(0, rate);
 }
 
 /**
  * Calculate the Vorsorgepauschale (insurance deduction allowance).
- * Simplified calculation used for monthly payroll.
- * For PKV, uses the GKV-equivalent amount as an approximation.
+ * Follows the BMF PAP methods: UPEVP, MVSPKVPV, and MVSPHB.
+ *
+ * Key PAP rules:
+ * - VSPR (RV part): trunc2, computed unless KRV==1
+ * - VSPKVPV (KV+PV part): trunc2
+ *   - For PKV + TC6: VSPKVPV = 0
+ *   - For PKV + other TC: VSPKVPV = PKV premium (capped at GKV equivalent)
+ *   - For GKV: VSPKVPV = income * (KVSATZAN + PVSATZAN)
+ * - VSP = VSPKVPV + VSPR (basic calculation)
+ * - MVSPHB (only for TC != 6): alternative with AV cap of 1900 EUR
+ *   - VSPN = ceil(VSPR + min(VSPALV + VSPKVPV, 1900))
+ *   - VSP = max(VSP, VSPN)
  */
 function calculateVorsorgepauschale(
   annualGross: number,
+  taxClass: Steuerklasse,
   state: Bundesland,
-  kvRate: number,
   zusatzbeitrag: number,
   childrenCount: number,
   age: number,
+  cfg: TaxYearConfig,
+  isGesetzlich: boolean = true,
+  privatKvAnnual: number = 0,
 ): number {
-  const bbgRvAv = getBBGRvAv(state);
-  const rvBasis = Math.min(annualGross, bbgRvAv);
+  const rvBasis = Math.min(annualGross, cfg.bbgRvAv);
+  const kvPvBasis = Math.min(annualGross, cfg.bbgKvPv);
 
-  // Part 1: Rentenversicherung contribution (employee share)
-  const rvPauschale = rvBasis * (RV_RATE / 2);
+  // VSPR: Rentenversicherung (employee share), truncated to 2 decimals per PAP
+  const vspr = trunc2(rvBasis * (cfg.rvRate / 2));
 
-  const kvPvBasis = Math.min(annualGross, BBG_KV_PV);
+  // MVSPKVPV: KV + PV combined component
+  let vspkvpv: number;
+  const kvsatzan = zusatzbeitrag / 2 + cfg.kvReducedRate / 2;
+  const pvsatzan = computePvEmployeeRate(state, childrenCount, age, cfg);
 
-  // Part 2: Krankenversicherung (employee share)
-  // For both GKV and PKV, use the GKV-equivalent as an approximation
-  const kvPauschale = kvPvBasis * ((kvRate + zusatzbeitrag) / 2);
+  if (!isGesetzlich) {
+    // PKV
+    if (taxClass === 6) {
+      // PAP: If PKV > 0 AND STKL == 6, VSPKVPV = 0
+      vspkvpv = 0;
+    } else {
+      // PAP: VSPKVPV = PKPV annual premium (employee portion)
+      // Capped at GKV-equivalent: kvPvBasis * (KVSATZAN + PVSATZAN)
+      const gkvEquivalent = trunc2(kvPvBasis * (kvsatzan + pvsatzan));
+      vspkvpv = Math.min(privatKvAnnual, gkvEquivalent);
+      vspkvpv = Math.max(0, vspkvpv);
+    }
+  } else {
+    // GKV: VSPKVPV = income * (KVSATZAN + PVSATZAN)
+    vspkvpv = trunc2(kvPvBasis * (kvsatzan + pvsatzan));
+  }
 
-  // Part 3: Pflegeversicherung (employee share)
-  const pvEmployeeRate = computePvEmployeeRate(state, childrenCount, age);
-  const pvPauschale = kvPvBasis * pvEmployeeRate;
+  // Basic VSP
+  let vsp = vspkvpv + vspr;
 
-  return round2(rvPauschale + kvPauschale + pvPauschale);
+  // MVSPHB: Alternative computation (only for TC != 6)
+  if (taxClass !== 6) {
+    const vspalv = trunc2((cfg.avRate / 2) * rvBasis);
+    let vsphb = trunc2(vspalv + vspkvpv);
+    if (vsphb > 1900) {
+      vsphb = 1900;
+    }
+    const vspn = ceilToEuro(vspr + vsphb);
+    if (vspn > vsp) {
+      vsp = vspn;
+    }
+  }
+
+  return vsp;
 }
 
 /**
- * Compute the zu versteuerndes Einkommen (zvE) for a given salary and tax class.
- * Shared helper used by calculateLohnsteuer and for Kinderfreibetrag adjustments.
+ * Compute the zu versteuerndes Einkommen (zvE).
  */
 function computeZvE(
   annualGross: number,
   taxClass: Steuerklasse,
   state: Bundesland,
   childrenCount: number,
-  kvRate: number,
   zusatzbeitrag: number,
   age: number,
+  cfg: TaxYearConfig,
+  isGesetzlich: boolean = true,
+  privatKvAnnual: number = 0,
 ): number {
-  const arbeitnehmerPauschbetrag = getArbeitnehmerPauschbetragForClass(taxClass);
-  const sonderausgabenPauschbetrag = getSonderausgabenPauschbetragForClass(taxClass);
-  const vorsorgepauschale = calculateVorsorgepauschale(annualGross, state, kvRate, zusatzbeitrag, childrenCount, age);
+  const arbeitnehmerPauschbetrag = getArbeitnehmerPauschbetragForClass(taxClass, cfg);
+  const sonderausgabenPauschbetrag = getSonderausgabenPauschbetragForClass(taxClass, cfg);
+  const vorsorgepauschale = calculateVorsorgepauschale(annualGross, taxClass, state, zusatzbeitrag, childrenCount, age, cfg, isGesetzlich, privatKvAnnual);
 
   let zvE = annualGross - arbeitnehmerPauschbetrag - sonderausgabenPauschbetrag - vorsorgepauschale;
 
-  // Tax class II: Entlastungsbetrag fuer Alleinerziehende (scales with children)
   if (taxClass === 2) {
-    zvE -= ENTLASTUNGSBETRAG_ALLEINERZIEHENDE + Math.max(0, childrenCount - 1) * ENTLASTUNGSBETRAG_ADDITIONAL_CHILD;
+    zvE -= cfg.entlastungsbetragAlleinerziehende + Math.max(0, childrenCount - 1) * cfg.entlastungsbetragAdditionalChild;
   }
 
   return Math.max(0, zvE);
 }
 
 /**
- * Calculate the Einkommensteuer for a given zvE, respecting tax class splitting rules.
- * Class V/VI: no Grundfreibetrag benefit - offset the built-in Zone 1 exemption.
+ * Calculate the Einkommensteuer for a given zvE, respecting tax class rules.
+ * Per PAP UPMLST:
+ * - TC 1,2,4: X = floor(zvE), call UPTAB
+ * - TC 3: X = floor(zvE / 2), call UPTAB, multiply by 2
+ * - TC 5,6: X = floor(zvE), call MST5_6 (graduated rate method)
  */
-function computeTaxForZvE(zvE: number, taxClass: Steuerklasse): number {
+function computeTaxForZvE(zvE: number, taxClass: Steuerklasse, cfg: TaxYearConfig): number {
   if (taxClass === 3) {
-    // Splittingtabelle: halve the zvE, calculate tax, then double
-    return calculateEinkommensteuer(zvE / 2) * 2;
+    // Splittingverfahren: divide by KZTAB=2, compute tax, multiply by 2
+    const x = floorToEuro(zvE / 2);
+    return calculateEinkommensteuer(x, cfg) * 2;
   }
   if (taxClass === 5 || taxClass === 6) {
-    // Class V/VI have no Grundfreibetrag - add it back to counteract Zone 1 exemption
-    return calculateEinkommensteuer(zvE + GRUNDFREIBETRAG);
+    // MST5_6: graduated rate method per § 39b Abs. 2 Satz 7 EStG
+    const x = floorToEuro(zvE);
+    return mst5_6(x, cfg);
   }
-  return calculateEinkommensteuer(zvE);
+  // TC 1, 2, 4: standard progressive tariff
+  return calculateEinkommensteuer(zvE, cfg);
 }
 
 /**
- * Calculate annual Lohnsteuer (wage tax) based on tax class.
- * This considers Grundfreibetrag, Arbeitnehmer-Pauschbetrag, Sonderausgaben-Pauschbetrag,
- * Vorsorgepauschale, and applies Splitting for class III.
+ * Calculate annual Lohnsteuer (wage tax).
  */
 export function calculateLohnsteuer(
   annualGross: number,
   taxClass: Steuerklasse,
   state: Bundesland,
   childrenCount: number,
-  kvRate: number,
   zusatzbeitrag: number,
-  age: number = 30,
+  age: number,
+  cfg: TaxYearConfig,
+  isGesetzlich: boolean = true,
+  privatKvAnnual: number = 0,
 ): number {
   if (annualGross <= 0) return 0;
 
-  const zvE = computeZvE(annualGross, taxClass, state, childrenCount, kvRate, zusatzbeitrag, age);
-  return computeTaxForZvE(zvE, taxClass);
+  const zvE = computeZvE(annualGross, taxClass, state, childrenCount, zusatzbeitrag, age, cfg, isGesetzlich, privatKvAnnual);
+  return computeTaxForZvE(zvE, taxClass, cfg);
 }
 
 /**
- * Calculate Solidaritaetszuschlag (solidarity surcharge).
- * 5.5% of Lohnsteuer, but only if Lohnsteuer exceeds the Freigrenze.
- * Milderungszone applies above the Freigrenze.
+ * Calculate Solidaritätszuschlag.
  */
 export function calculateSoli(
   lohnsteuerAnnual: number,
   taxClass: Steuerklasse,
+  cfg: TaxYearConfig,
 ): number {
   if (lohnsteuerAnnual <= 0) return 0;
 
-  const freigrenze = taxClass === 3 ? SOLI_FREIGRENZE_MARRIED : SOLI_FREIGRENZE_SINGLE;
+  const freigrenze = taxClass === 3 ? cfg.soliFreigrezeMarried : cfg.soliFreigrenzeSingle;
 
   if (lohnsteuerAnnual <= freigrenze) {
     return 0;
   }
 
-  const fullSoli = lohnsteuerAnnual * SOLI_RATE;
-  const milderungSoli = (lohnsteuerAnnual - freigrenze) * SOLI_MILDERUNG_RATE;
+  const fullSoli = lohnsteuerAnnual * cfg.soliRate;
+  const milderungSoli = (lohnsteuerAnnual - freigrenze) * cfg.soliMilderungRate;
 
-  // The Soli is capped at the Milderungszone amount (gradual phase-in)
   return round2(Math.min(fullSoli, milderungSoli));
 }
 
 /**
  * Calculate Kirchensteuer (church tax).
- * 8% or 9% of Lohnsteuer depending on state.
  */
 export function calculateKirchensteuer(
   lohnsteuerAnnual: number,
   state: Bundesland,
   churchMember: boolean,
+  cfg: TaxYearConfig,
 ): number {
   if (!churchMember || lohnsteuerAnnual <= 0) return 0;
-  const rate = getKirchensteuerRate(state);
+  const rate = getKirchensteuerRate(state, cfg);
   return round2(lohnsteuerAnnual * rate);
 }
 
@@ -237,21 +337,22 @@ export function calculateKirchensteuer(
  */
 export function calculateKrankenversicherung(
   annualGross: number,
-  kvRate: number,
   zusatzbeitrag: number,
   isGesetzlich: boolean,
+  cfg: TaxYearConfig,
   privatMonthly?: number,
 ): [number, number] {
   if (!isGesetzlich) {
-    const annual = (privatMonthly ?? 0) * 12;
-    // For private insurance, employer pays a subsidy up to the max employer share
-    const maxEmployerAnnual = (Math.min(annualGross, BBG_KV_PV) * (kvRate + zusatzbeitrag)) / 2;
-    const employerShare = Math.min(annual / 2, maxEmployerAnnual);
-    return [round2(annual - employerShare), round2(employerShare)];
+    // privatMonthly is the employee's own monthly PKV premium
+    const employeeAnnual = (privatMonthly ?? 0) * 12;
+    // Employer subsidy is capped at the GKV-equivalent employer share
+    const maxEmployerAnnual = (Math.min(annualGross, cfg.bbgKvPv) * (cfg.kvGeneralRate + zusatzbeitrag)) / 2;
+    const employerShare = Math.min(employeeAnnual, maxEmployerAnnual);
+    return [round2(employeeAnnual), round2(employerShare)];
   }
 
-  const basis = Math.min(annualGross, BBG_KV_PV);
-  const totalRate = kvRate + zusatzbeitrag;
+  const basis = Math.min(annualGross, cfg.bbgKvPv);
+  const totalRate = cfg.kvGeneralRate + zusatzbeitrag;
   const employeeShare = basis * (totalRate / 2);
   const employerShare = basis * (totalRate / 2);
 
@@ -261,29 +362,23 @@ export function calculateKrankenversicherung(
 /**
  * Calculate Pflegeversicherung (long-term care insurance).
  * Returns [employeeAnnual, employerAnnual].
- *
- * Base rate 3.6% split equally, BUT:
- * - Childless persons aged 23+: +0.6% surcharge (employee only)
- * - Per child from 2nd to 5th: -0.25% discount (employee only)
- * - Sachsen: employee pays an extra 0.5% (historical Buss- und Bettag rule)
  */
 export function calculatePflegeversicherung(
   annualGross: number,
   childrenCount: number,
   age: number,
   state: Bundesland,
+  cfg: TaxYearConfig,
 ): [number, number] {
-  const basis = Math.min(annualGross, BBG_KV_PV);
+  const basis = Math.min(annualGross, cfg.bbgKvPv);
 
-  const employeeRate = computePvEmployeeRate(state, childrenCount, age);
-  let employerRate = PV_BASE_RATE / 2;
+  const employeeRate = computePvEmployeeRate(state, childrenCount, age, cfg);
+  let employerRate = cfg.pvBaseRate / 2;
 
-  // Sachsen special rule: shift 0.5% from employer to employee
   if (state === 'Sachsen') {
-    employerRate -= PV_SACHSEN_EXTRA_EMPLOYEE;
+    employerRate -= cfg.pvSachsenExtraEmployee;
   }
 
-  // Ensure rates don't go below 0
   employerRate = Math.max(0, employerRate);
 
   return [round2(basis * employeeRate), round2(basis * employerRate)];
@@ -292,40 +387,56 @@ export function calculatePflegeversicherung(
 /**
  * Calculate Rentenversicherung (pension insurance).
  * Returns [employeeAnnual, employerAnnual].
- * 18.6% total, split equally, up to BBG.
  */
 export function calculateRentenversicherung(
   annualGross: number,
-  state: Bundesland,
+  cfg: TaxYearConfig,
 ): [number, number] {
-  const bbg = getBBGRvAv(state);
-  const basis = Math.min(annualGross, bbg);
-  const share = round2(basis * (RV_RATE / 2));
+  const basis = Math.min(annualGross, cfg.bbgRvAv);
+  const share = round2(basis * (cfg.rvRate / 2));
   return [share, share];
 }
 
 /**
  * Calculate Arbeitslosenversicherung (unemployment insurance).
  * Returns [employeeAnnual, employerAnnual].
- * 2.6% total, split equally, up to BBG.
  */
 export function calculateArbeitslosenversicherung(
   annualGross: number,
-  state: Bundesland,
+  cfg: TaxYearConfig,
 ): [number, number] {
-  const bbg = getBBGRvAv(state);
-  const basis = Math.min(annualGross, bbg);
-  const share = round2(basis * (AV_RATE / 2));
+  const basis = Math.min(annualGross, cfg.bbgRvAv);
+  const share = round2(basis * (cfg.avRate / 2));
   return [share, share];
 }
 
 /**
- * Main calculation function. Orchestrates all individual calculations
- * and returns a full tax breakdown.
+ * Convert a value to monthly based on salary mode.
+ * For monthly mode: uses PAP de-annualization (floor of cents / 12)
+ * For annual mode: simple division by 12, rounded to cents
+ */
+function toMonthly(annualValue: number, salaryMode: SalaryMode): number {
+  if (salaryMode === 'monthly') {
+    return deannualizeMonthly(annualValue);
+  }
+  return round2(annualValue / 12);
+}
+
+/**
+ * Main calculation function. Orchestrates all individual calculations.
+ *
+ * When salaryMode is 'monthly', the calculation follows the BMF PAP:
+ * 1. Annualize monthly salary (x12, truncate to 2 decimals)
+ * 2. Compute annual taxes
+ * 3. De-annualize to monthly (floor of annual_cents / 12)
+ *
+ * When salaryMode is 'annual', computes annual values and divides by 12.
  */
 export function calculateNetSalary(input: TaxInput): TaxResult {
   const {
-    annualGrossSalary,
+    grossSalary,
+    salaryMode,
+    taxYear = DEFAULT_TAX_YEAR,
     taxClass,
     state,
     churchMember,
@@ -336,53 +447,66 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
     age = 30,
   } = input;
 
+  const cfg = getTaxYearConfig(taxYear);
   const isGesetzlich = healthInsuranceType === 'gesetzlich';
-  const kvRate = KV_GENERAL_RATE;
+
+  // Determine annual gross based on salary mode
+  let annualGross: number;
+  if (salaryMode === 'monthly') {
+    // PAP: annualize by multiplying by 12, truncate to 2 decimals
+    annualGross = trunc2(grossSalary * 12);
+  } else {
+    annualGross = grossSalary;
+  }
+
+  const monthlyGross = salaryMode === 'monthly' ? grossSalary : round2(annualGross / 12);
+
+  // For PKV, compute the annual premium for Vorsorgepauschale
+  const privatKvAnnual = !isGesetzlich ? (privatHealthInsuranceMonthly ?? 0) * 12 : 0;
 
   // Calculate Lohnsteuer
   const lohnsteuerAnnual = calculateLohnsteuer(
-    annualGrossSalary,
+    annualGross,
     taxClass,
     state,
     childrenCount,
-    kvRate,
     zusatzbeitragRate,
     age,
+    cfg,
+    isGesetzlich,
+    privatKvAnnual,
   );
 
   // Calculate hypothetical Lohnsteuer with Kinderfreibetrag for Soli/Kirchensteuer
-  // Per German tax law, Kinderfreibetrag reduces the Lohnsteuer basis for Soli and KiSt
   let lohnsteuerForSoliKiSt = lohnsteuerAnnual;
   if (childrenCount > 0) {
-    const zvE = computeZvE(annualGrossSalary, taxClass, state, childrenCount, kvRate, zusatzbeitragRate, age);
-    const reducedZvE = Math.max(0, zvE - childrenCount * KINDERFREIBETRAG_SOLI);
-    lohnsteuerForSoliKiSt = computeTaxForZvE(reducedZvE, taxClass);
+    const zvE = computeZvE(annualGross, taxClass, state, childrenCount, zusatzbeitragRate, age, cfg, isGesetzlich, privatKvAnnual);
+    const reducedZvE = Math.max(0, zvE - childrenCount * cfg.kinderfreibetragSoli);
+    lohnsteuerForSoliKiSt = computeTaxForZvE(reducedZvE, taxClass, cfg);
   }
 
-  // Calculate Soli on Kinderfreibetrag-reduced Lohnsteuer
-  const soliAnnual = calculateSoli(lohnsteuerForSoliKiSt, taxClass);
-
-  // Calculate Kirchensteuer on Kinderfreibetrag-reduced Lohnsteuer
-  const kirchensteuerAnnual = calculateKirchensteuer(lohnsteuerForSoliKiSt, state, churchMember);
+  const soliAnnual = calculateSoli(lohnsteuerForSoliKiSt, taxClass, cfg);
+  const kirchensteuerAnnual = calculateKirchensteuer(lohnsteuerForSoliKiSt, state, churchMember, cfg);
 
   // Calculate social insurance
   const [kvEmployee, kvEmployer] = calculateKrankenversicherung(
-    annualGrossSalary,
-    kvRate,
+    annualGross,
     zusatzbeitragRate,
     isGesetzlich,
+    cfg,
     privatHealthInsuranceMonthly,
   );
 
   const [pvEmployee, pvEmployer] = calculatePflegeversicherung(
-    annualGrossSalary,
+    annualGross,
     childrenCount,
     age,
     state,
+    cfg,
   );
 
-  const [rvEmployee, rvEmployer] = calculateRentenversicherung(annualGrossSalary, state);
-  const [avEmployee, avEmployer] = calculateArbeitslosenversicherung(annualGrossSalary, state);
+  const [rvEmployee, rvEmployer] = calculateRentenversicherung(annualGross, cfg);
+  const [avEmployee, avEmployer] = calculateArbeitslosenversicherung(annualGross, cfg);
 
   // Total deductions (employee only)
   const totalDeductionsAnnual = round2(
@@ -395,7 +519,7 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
       avEmployee,
   );
 
-  const annualNet = round2(annualGrossSalary - totalDeductionsAnnual);
+  const annualNet = round2(annualGross - totalDeductionsAnnual);
 
   // Build deduction items for display
   const deductions: DeductionItem[] = [
@@ -403,57 +527,64 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
       name: 'Lohnsteuer',
       employeeShareAnnual: lohnsteuerAnnual,
       employerShareAnnual: 0,
-      employeeShareMonthly: round2(lohnsteuerAnnual / 12),
+      employeeShareMonthly: toMonthly(lohnsteuerAnnual, salaryMode),
       employerShareMonthly: 0,
     },
     {
-      name: 'Solidaritaetszuschlag',
+      name: 'Solidaritätszuschlag',
       employeeShareAnnual: soliAnnual,
       employerShareAnnual: 0,
-      employeeShareMonthly: round2(soliAnnual / 12),
+      employeeShareMonthly: toMonthly(soliAnnual, salaryMode),
       employerShareMonthly: 0,
     },
     {
       name: 'Kirchensteuer',
       employeeShareAnnual: kirchensteuerAnnual,
       employerShareAnnual: 0,
-      employeeShareMonthly: round2(kirchensteuerAnnual / 12),
+      employeeShareMonthly: toMonthly(kirchensteuerAnnual, salaryMode),
       employerShareMonthly: 0,
     },
     {
       name: 'Krankenversicherung',
       employeeShareAnnual: kvEmployee,
       employerShareAnnual: kvEmployer,
-      employeeShareMonthly: round2(kvEmployee / 12),
-      employerShareMonthly: round2(kvEmployer / 12),
+      employeeShareMonthly: toMonthly(kvEmployee, salaryMode),
+      employerShareMonthly: toMonthly(kvEmployer, salaryMode),
     },
     {
       name: 'Pflegeversicherung',
       employeeShareAnnual: pvEmployee,
       employerShareAnnual: pvEmployer,
-      employeeShareMonthly: round2(pvEmployee / 12),
-      employerShareMonthly: round2(pvEmployer / 12),
+      employeeShareMonthly: toMonthly(pvEmployee, salaryMode),
+      employerShareMonthly: toMonthly(pvEmployer, salaryMode),
     },
     {
       name: 'Rentenversicherung',
       employeeShareAnnual: rvEmployee,
       employerShareAnnual: rvEmployer,
-      employeeShareMonthly: round2(rvEmployee / 12),
-      employerShareMonthly: round2(rvEmployer / 12),
+      employeeShareMonthly: toMonthly(rvEmployee, salaryMode),
+      employerShareMonthly: toMonthly(rvEmployer, salaryMode),
     },
     {
       name: 'Arbeitslosenversicherung',
       employeeShareAnnual: avEmployee,
       employerShareAnnual: avEmployer,
-      employeeShareMonthly: round2(avEmployee / 12),
-      employerShareMonthly: round2(avEmployer / 12),
+      employeeShareMonthly: toMonthly(avEmployee, salaryMode),
+      employerShareMonthly: toMonthly(avEmployer, salaryMode),
     },
   ];
 
+  const totalDeductionsMonthly = deductions.reduce(
+    (sum, d) => round2(sum + d.employeeShareMonthly),
+    0,
+  );
+
+  const monthlyNet = round2(monthlyGross - totalDeductionsMonthly);
+
   return {
     input,
-    annualGross: annualGrossSalary,
-    monthlyGross: round2(annualGrossSalary / 12),
+    annualGross,
+    monthlyGross,
     lohnsteuerAnnual,
     soliAnnual,
     kirchensteuerAnnual,
@@ -466,9 +597,9 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
     arbeitslosenversicherungEmployeeAnnual: avEmployee,
     arbeitslosenversicherungEmployerAnnual: avEmployer,
     totalDeductionsAnnual,
-    totalDeductionsMonthly: round2(totalDeductionsAnnual / 12),
+    totalDeductionsMonthly,
     annualNet,
-    monthlyNet: round2(annualNet / 12),
+    monthlyNet,
     deductions,
   };
 }
