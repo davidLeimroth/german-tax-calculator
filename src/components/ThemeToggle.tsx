@@ -13,8 +13,16 @@ function getInitialTheme(): string {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [theme, setTheme] = useState(DEFAULT_THEME);
   const { t } = useI18n();
+
+  // Apply stored theme after hydration to avoid SSR mismatch
+  useEffect(() => {
+    const stored = getInitialTheme();
+    if (stored !== DEFAULT_THEME) {
+      setTheme(stored);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

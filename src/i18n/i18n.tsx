@@ -50,7 +50,7 @@ function getInitialLocale(): Locale {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -58,6 +58,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute('lang', l);
     document.title = translations[l].meta.title;
     updateUrlParam('lang', l, DEFAULT_LOCALE);
+  }, []);
+
+  // Apply stored/URL locale after hydration to avoid SSR mismatch
+  useEffect(() => {
+    const stored = getInitialLocale();
+    if (stored !== DEFAULT_LOCALE) {
+      setLocaleState(stored);
+    }
   }, []);
 
   useEffect(() => {
