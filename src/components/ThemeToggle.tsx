@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
+import { useI18n, updateUrlParam } from '../i18n/i18n';
+
+const DEFAULT_THEME = 'light';
 
 function getInitialTheme(): string {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('theme') || 'light';
+    const urlParam = new URLSearchParams(window.location.search).get('theme');
+    if (urlParam === 'light' || urlParam === 'dark') return urlParam;
+    return localStorage.getItem('theme') || DEFAULT_THEME;
   }
-  return 'light';
+  return DEFAULT_THEME;
 }
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState(getInitialTheme);
+  const { t } = useI18n();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    updateUrlParam('theme', theme, DEFAULT_THEME);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -20,7 +27,7 @@ export default function ThemeToggle() {
   };
 
   return (
-    <label className="swap swap-rotate" aria-label="Toggle theme">
+    <label className="swap swap-rotate" aria-label={t.theme.toggle}>
       <input
         type="checkbox"
         checked={theme === 'dark'}

@@ -1,12 +1,14 @@
 import { ResponsiveBar } from '@nivo/bar';
 import type { TaxResult } from '../lib/types';
-import { formatEur, CHART_COLORS } from '../lib/format';
+import { formatEur, CHART_COLORS, SHORT_LABELS, NIVO_THEME, toChartKey } from '../lib/format';
+import { useI18n } from '../i18n/i18n';
 
 interface BreakdownBarProps {
   result: TaxResult;
 }
 
 export default function BreakdownBar({ result }: BreakdownBarProps) {
+  const { t } = useI18n();
   const keys = [
     'Netto',
     'Lohnsteuer',
@@ -20,46 +22,68 @@ export default function BreakdownBar({ result }: BreakdownBarProps) {
 
   const deductionMap: Record<string, number> = {};
   for (const d of result.deductions) {
-    const shortName = d.name === 'Solidaritaetszuschlag' ? 'Soli' : d.name;
+    const shortName = toChartKey(d.name);
     deductionMap[shortName] = d.employeeShareMonthly;
   }
 
-  const data = [
-    {
-      category: 'Monatlich',
-      Netto: result.monthlyNet,
-      ...deductionMap,
-    },
-  ];
+  const baseData = {
+    category: t.chart.monthlyCategory,
+    Netto: result.monthlyNet,
+    ...deductionMap,
+  };
 
   // Filter out zero-value keys
   const activeKeys = keys.filter(
-    (key) => Number((data[0] as Record<string, number | string>)[key]) > 0
+    (key) => Number((baseData as Record<string, number | string>)[key]) > 0
   );
 
+  // Translate a chart key to its display name
+  const translateKey = (key: string): string => {
+    if (key === 'Netto') return t.chart.netto;
+    if (key === 'Soli') return t.deductions['Solidaritätszuschlag'] || key;
+    return t.deductions[key as keyof typeof t.deductions] || key;
+  };
+
+  const data = activeKeys.map((key) => ({
+    category: SHORT_LABELS[key] || key,
+    fullName: key,
+    value: Number((baseData as Record<string, number | string>)[key]),
+  }));
+
   return (
-    <div style={{ height: 200 }} aria-label="Monthly breakdown bar chart" role="img">
+    <div style={{ height: 300 }} role="figure" aria-labelledby="bar-chart-caption">
+      <span id="bar-chart-caption" className="sr-only">
+        {t.chart.barCaption}
+      </span>
+      <dl className="sr-only">
+        {activeKeys.map((key) => (
+          <div key={key}>
+            <dt>{translateKey(key)}</dt>
+            <dd>{formatEur(Number((baseData as Record<string, number | string>)[key]))}</dd>
+          </div>
+        ))}
+      </dl>
       <ResponsiveBar
         data={data}
-        keys={activeKeys}
+        keys={['value']}
         indexBy="category"
-        margin={{ top: 10, right: 20, bottom: 30, left: 80 }}
+        margin={{ top: 10, right: 10, bottom: 30, left: 50 }}
         padding={0.3}
-        layout="horizontal"
+        layout="vertical"
         valueScale={{ type: 'linear' }}
         indexScale={{ type: 'band', round: true }}
-        colors={({ id }) => CHART_COLORS[id as string] || '#999'}
+        colors={({ data: d }) => CHART_COLORS[(d as Record<string, string | number>).fullName] || '#999'}
         borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-        axisBottom={{
-          tickSize: 5,
-          tickPadding: 5,
-          format: (v) => `${Number(v).toLocaleString('de-DE')} EUR`,
+        axisBottom={{ tickSize: 0, tickPadding: 5 }}
+        axisLeft={{ tickSize: 0, tickPadding: 5, format: (v) => `${Number(v).toLocaleString('de-DE')}` }}
+        theme={{
+          ...NIVO_THEME,
+          text: { ...NIVO_THEME.text, fontSize: 12 },
         }}
-        axisLeft={null}
         enableLabel={false}
-        tooltip={({ id, value }) => (
-          <div className="bg-base-100 shadow-lg rounded px-3 py-2 text-sm">
-            <strong>{id}</strong>: {formatEur(value)}
+        tooltip={({ data: d, value }) => (
+          <div className="bg-base-100 shadow-lg rounded-lg px-3 py-2 text-sm">
+            <strong>{translateKey(String((d as Record<string, string | number>).fullName))}</strong>: {formatEur(value)}
           </div>
         )}
         animate={true}

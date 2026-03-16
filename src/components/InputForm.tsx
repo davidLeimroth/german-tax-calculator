@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useStore } from '@tanstack/react-store';
-import type { Bundesland, HealthInsuranceType, Steuerklasse, TaxInput } from '../lib/types';
-import { KV_DEFAULT_ZUSATZBEITRAG } from '../lib/constants';
+import type { Bundesland, HealthInsuranceType, SalaryMode, Steuerklasse, TaxInput } from '../lib/types';
+import type { TaxYear } from '../lib/tax-years';
+import { AVAILABLE_TAX_YEARS, DEFAULT_TAX_YEAR, getTaxYearConfig } from '../lib/tax-years';
+import { useI18n } from '../i18n/i18n';
 
 const BUNDESLAENDER: Bundesland[] = [
   'Baden-Wuerttemberg',
@@ -26,7 +28,8 @@ const BUNDESLAENDER: Bundesland[] = [
 const STEUERKLASSEN: Steuerklasse[] = [1, 2, 3, 4, 5, 6];
 
 export interface InputFormValues {
-  salaryMode: 'annual' | 'monthly';
+  taxYear: TaxYear;
+  salaryMode: SalaryMode;
   grossSalary: number;
   taxClass: Steuerklasse;
   state: Bundesland;
@@ -39,28 +42,115 @@ export interface InputFormValues {
 }
 
 const DEFAULT_VALUES: InputFormValues = {
+  taxYear: DEFAULT_TAX_YEAR,
   salaryMode: 'annual',
   grossSalary: 50000,
   taxClass: 1,
-  state: 'Bayern',
+  state: 'Baden-Wuerttemberg',
   churchMember: false,
   childrenCount: 0,
   healthInsuranceType: 'gesetzlich',
-  zusatzbeitragRate: KV_DEFAULT_ZUSATZBEITRAG * 100,
+  zusatzbeitragRate: Math.round(getTaxYearConfig(DEFAULT_TAX_YEAR).kvDefaultZusatzbeitrag * 10000) / 100,
   privatHealthInsuranceMonthly: 300,
   age: 30,
 };
 
+/** Short URL param keys to keep shareable URLs compact */
+const PARAM_KEYS = {
+  taxYear: 'y',
+  salaryMode: 'm',
+  grossSalary: 's',
+  taxClass: 'tc',
+  state: 'bl',
+  churchMember: 'ch',
+  childrenCount: 'k',
+  age: 'age',
+  healthInsuranceType: 'hi',
+  zusatzbeitragRate: 'zb',
+  privatHealthInsuranceMonthly: 'pkv',
+} as const;
+
+function parseUrlParams(): Partial<InputFormValues> {
+  if (typeof window === 'undefined') return {};
+  const params = new URLSearchParams(window.location.search);
+  const result: Partial<InputFormValues> = {};
+
+  const y = params.get(PARAM_KEYS.taxYear);
+  if (y && AVAILABLE_TAX_YEARS.includes(Number(y) as TaxYear)) {
+    result.taxYear = Number(y) as TaxYear;
+  }
+
+  const m = params.get(PARAM_KEYS.salaryMode);
+  if (m === 'annual' || m === 'monthly') result.salaryMode = m;
+
+  const s = params.get(PARAM_KEYS.grossSalary);
+  if (s != null && !isNaN(Number(s)) && Number(s) >= 0) result.grossSalary = Number(s);
+
+  const tc = params.get(PARAM_KEYS.taxClass);
+  if (tc && [1, 2, 3, 4, 5, 6].includes(Number(tc))) result.taxClass = Number(tc) as Steuerklasse;
+
+  const bl = params.get(PARAM_KEYS.state);
+  if (bl && BUNDESLAENDER.includes(bl as Bundesland)) result.state = bl as Bundesland;
+
+  const ch = params.get(PARAM_KEYS.churchMember);
+  if (ch === '1' || ch === '0') result.churchMember = ch === '1';
+
+  const k = params.get(PARAM_KEYS.childrenCount);
+  if (k != null && !isNaN(Number(k)) && Number(k) >= 0) result.childrenCount = Number(k);
+
+  const age = params.get(PARAM_KEYS.age);
+  if (age != null && !isNaN(Number(age)) && Number(age) >= 16) result.age = Number(age);
+
+  const hi = params.get(PARAM_KEYS.healthInsuranceType);
+  if (hi === 'gesetzlich' || hi === 'privat') result.healthInsuranceType = hi;
+
+  const zb = params.get(PARAM_KEYS.zusatzbeitragRate);
+  if (zb != null && !isNaN(Number(zb)) && Number(zb) >= 0) result.zusatzbeitragRate = Number(zb);
+
+  const pkv = params.get(PARAM_KEYS.privatHealthInsuranceMonthly);
+  if (pkv != null && !isNaN(Number(pkv)) && Number(pkv) >= 0) result.privatHealthInsuranceMonthly = Number(pkv);
+
+  return result;
+}
+
+function updateUrlParams(values: InputFormValues) {
+  if (typeof window === 'undefined') return;
+  const params = new URLSearchParams();
+
+  // Preserve lang and theme params managed by other components
+  const currentParams = new URLSearchParams(window.location.search);
+  const lang = currentParams.get('lang');
+  if (lang) params.set('lang', lang);
+  const theme = currentParams.get('theme');
+  if (theme) params.set('theme', theme);
+
+  // Only include values that differ from defaults
+  if (values.taxYear !== DEFAULT_VALUES.taxYear) params.set(PARAM_KEYS.taxYear, String(values.taxYear));
+  if (values.salaryMode !== DEFAULT_VALUES.salaryMode) params.set(PARAM_KEYS.salaryMode, values.salaryMode);
+  if (values.grossSalary !== DEFAULT_VALUES.grossSalary) params.set(PARAM_KEYS.grossSalary, String(values.grossSalary));
+  if (values.taxClass !== DEFAULT_VALUES.taxClass) params.set(PARAM_KEYS.taxClass, String(values.taxClass));
+  if (values.state !== DEFAULT_VALUES.state) params.set(PARAM_KEYS.state, values.state);
+  if (values.churchMember !== DEFAULT_VALUES.churchMember) params.set(PARAM_KEYS.churchMember, values.churchMember ? '1' : '0');
+  if (values.childrenCount !== DEFAULT_VALUES.childrenCount) params.set(PARAM_KEYS.childrenCount, String(values.childrenCount));
+  if (values.age !== DEFAULT_VALUES.age) params.set(PARAM_KEYS.age, String(values.age));
+  if (values.healthInsuranceType !== DEFAULT_VALUES.healthInsuranceType) params.set(PARAM_KEYS.healthInsuranceType, values.healthInsuranceType);
+  if (values.zusatzbeitragRate !== DEFAULT_VALUES.zusatzbeitragRate) params.set(PARAM_KEYS.zusatzbeitragRate, String(values.zusatzbeitragRate));
+  if (values.privatHealthInsuranceMonthly !== DEFAULT_VALUES.privatHealthInsuranceMonthly) params.set(PARAM_KEYS.privatHealthInsuranceMonthly, String(values.privatHealthInsuranceMonthly));
+
+  const qs = params.toString();
+  const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+  window.history.replaceState(null, '', newUrl);
+}
+
 export function formValuesToTaxInput(values: InputFormValues): TaxInput {
-  const annualGrossSalary =
-    values.salaryMode === 'monthly' ? values.grossSalary * 12 : values.grossSalary;
-  // For PKV users, use the default Zusatzbeitrag for the GKV-equivalent Vorsorgepauschale
   const zusatzbeitragRate =
     values.healthInsuranceType === 'privat'
-      ? KV_DEFAULT_ZUSATZBEITRAG
+      ? getTaxYearConfig(values.taxYear).kvDefaultZusatzbeitrag
       : values.zusatzbeitragRate / 100;
   return {
-    annualGrossSalary,
+    grossSalary: values.grossSalary,
+    salaryMode: values.salaryMode,
+    taxYear: values.taxYear,
     taxClass: values.taxClass,
     state: values.state,
     churchMember: values.churchMember,
@@ -77,9 +167,27 @@ interface InputFormProps {
 }
 
 export default function InputForm({ onChange }: InputFormProps) {
+  const { t } = useI18n();
+
   const form = useForm({
     defaultValues: DEFAULT_VALUES,
   });
+
+  // Apply URL params after hydration to avoid SSR mismatch
+  const urlApplied = useRef(false);
+  useEffect(() => {
+    if (urlApplied.current) return;
+    urlApplied.current = true;
+    const urlOverrides = parseUrlParams();
+    if (Object.keys(urlOverrides).length > 0) {
+      const merged = { ...DEFAULT_VALUES, ...urlOverrides };
+      for (const [key, value] of Object.entries(merged)) {
+        if (value !== DEFAULT_VALUES[key as keyof InputFormValues]) {
+          form.setFieldValue(key as keyof InputFormValues, value as never);
+        }
+      }
+    }
+  }, [form]);
 
   const values = useStore(form.store, (s) => s.values);
   const onChangeRef = useRef(onChange);
@@ -87,18 +195,48 @@ export default function InputForm({ onChange }: InputFormProps) {
 
   useEffect(() => {
     onChangeRef.current(values);
+    updateUrlParams(values);
   }, [values]);
 
   return (
     <form
       onSubmit={(e) => e.preventDefault()}
       className="space-y-4"
-      aria-label="Tax calculator input form"
+      aria-label={t.input.formAriaLabel}
     >
+      {/* Tax year */}
+      <div className="form-control">
+        <label className="label" htmlFor="taxYear">
+          <span className="label-text font-semibold">{t.input.taxYear}</span>
+        </label>
+        <form.Field name="taxYear">
+          {(field) => (
+            <select
+              id="taxYear"
+              className="select select-bordered w-full"
+              value={field.state.value}
+              onChange={(e) => {
+                const newYear = Number(e.target.value) as TaxYear;
+                field.handleChange(newYear);
+                // Update Zusatzbeitrag to the new year's default
+                const cfg = getTaxYearConfig(newYear);
+                form.setFieldValue('zusatzbeitragRate', Math.round(cfg.kvDefaultZusatzbeitrag * 10000) / 100);
+              }}
+            >
+              {AVAILABLE_TAX_YEARS.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          )}
+        </form.Field>
+      </div>
+
       {/* Salary input */}
       <div className="form-control">
         <label className="label" htmlFor="grossSalary">
-          <span className="label-text font-semibold">Bruttoeinkommen (EUR)</span>
+          <span className="label-text font-semibold">{t.input.grossIncome}</span>
         </label>
         <div className="join w-full">
           <form.Field name="grossSalary">
@@ -108,7 +246,7 @@ export default function InputForm({ onChange }: InputFormProps) {
                 type="number"
                 min={0}
                 step={100}
-                className="input input-bordered join-item flex-1"
+                className="input input-bordered join-item w-full min-w-0"
                 value={field.state.value}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
@@ -123,11 +261,11 @@ export default function InputForm({ onChange }: InputFormProps) {
               <select
                 className="select select-bordered join-item"
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value as 'annual' | 'monthly')}
-                aria-label="Salary period"
+                onChange={(e) => field.handleChange(e.target.value as SalaryMode)}
+                aria-label={t.input.salaryPeriod}
               >
-                <option value="annual">Jaehrlich</option>
-                <option value="monthly">Monatlich</option>
+                <option value="annual">{t.input.annual}</option>
+                <option value="monthly">{t.input.monthly}</option>
               </select>
             )}
           </form.Field>
@@ -137,7 +275,7 @@ export default function InputForm({ onChange }: InputFormProps) {
       {/* Tax class */}
       <div className="form-control">
         <label className="label" htmlFor="taxClass">
-          <span className="label-text font-semibold">Steuerklasse</span>
+          <span className="label-text font-semibold">{t.input.taxClass}</span>
         </label>
         <form.Field name="taxClass">
           {(field) => (
@@ -149,7 +287,7 @@ export default function InputForm({ onChange }: InputFormProps) {
             >
               {STEUERKLASSEN.map((sk) => (
                 <option key={sk} value={sk}>
-                  Steuerklasse {sk}
+                  {t.input.taxClassOption} {sk}
                 </option>
               ))}
             </select>
@@ -160,7 +298,7 @@ export default function InputForm({ onChange }: InputFormProps) {
       {/* Bundesland */}
       <div className="form-control">
         <label className="label" htmlFor="state">
-          <span className="label-text font-semibold">Bundesland</span>
+          <span className="label-text font-semibold">{t.input.state}</span>
         </label>
         <form.Field name="state">
           {(field) => (
@@ -172,7 +310,7 @@ export default function InputForm({ onChange }: InputFormProps) {
             >
               {BUNDESLAENDER.map((bl) => (
                 <option key={bl} value={bl}>
-                  {bl.replace(/-/g, ' ')}
+                  {bl.replace(/-/g, ' ').replace(/ue/g, 'ü')}
                 </option>
               ))}
             </select>
@@ -190,18 +328,18 @@ export default function InputForm({ onChange }: InputFormProps) {
                 className="toggle toggle-primary"
                 checked={field.state.value}
                 onChange={(e) => field.handleChange(e.target.checked)}
-                aria-label="Church member"
+                aria-label={t.input.churchMemberAria}
               />
             )}
           </form.Field>
-          <span className="label-text font-semibold">Kirchenmitglied</span>
+          <span className="label-text font-semibold">{t.input.churchMember}</span>
         </label>
       </div>
 
       {/* Children count */}
       <div className="form-control">
         <label className="label" htmlFor="childrenCount">
-          <span className="label-text font-semibold">Anzahl Kinder</span>
+          <span className="label-text font-semibold">{t.input.childrenCount}</span>
         </label>
         <form.Field name="childrenCount">
           {(field) => (
@@ -225,7 +363,7 @@ export default function InputForm({ onChange }: InputFormProps) {
       {/* Age */}
       <div className="form-control">
         <label className="label" htmlFor="age">
-          <span className="label-text font-semibold">Alter</span>
+          <span className="label-text font-semibold">{t.input.age}</span>
         </label>
         <form.Field name="age">
           {(field) => (
@@ -249,7 +387,7 @@ export default function InputForm({ onChange }: InputFormProps) {
       {/* Health insurance type */}
       <div className="form-control">
         <label className="label" htmlFor="healthInsuranceType">
-          <span className="label-text font-semibold">Krankenversicherung</span>
+          <span className="label-text font-semibold">{t.input.healthInsurance}</span>
         </label>
         <form.Field name="healthInsuranceType">
           {(field) => (
@@ -259,8 +397,8 @@ export default function InputForm({ onChange }: InputFormProps) {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value as HealthInsuranceType)}
             >
-              <option value="gesetzlich">Gesetzlich (GKV)</option>
-              <option value="privat">Privat (PKV)</option>
+              <option value="gesetzlich">{t.input.healthPublic}</option>
+              <option value="privat">{t.input.healthPrivate}</option>
             </select>
           )}
         </form.Field>
@@ -272,7 +410,7 @@ export default function InputForm({ onChange }: InputFormProps) {
           healthInsuranceType === 'gesetzlich' ? (
             <div className="form-control">
               <label className="label" htmlFor="zusatzbeitragRate">
-                <span className="label-text font-semibold">Zusatzbeitrag (%)</span>
+                <span className="label-text font-semibold">{t.input.additionalContribution}</span>
               </label>
               <form.Field name="zusatzbeitragRate">
                 {(field) => (
@@ -296,7 +434,7 @@ export default function InputForm({ onChange }: InputFormProps) {
           ) : (
             <div className="form-control">
               <label className="label" htmlFor="privatHealthInsuranceMonthly">
-                <span className="label-text font-semibold">PKV Monatsbeitrag (EUR)</span>
+                <span className="label-text font-semibold">{t.input.pkvMonthly}</span>
               </label>
               <form.Field name="privatHealthInsuranceMonthly">
                 {(field) => (
