@@ -48,7 +48,7 @@ export default function BreakdownBar({ result }: BreakdownBarProps) {
 
   // Filter out zero-value keys
   const activeKeys = keys.filter(
-    (key) => (data[0] as Record<string, number | string>)[key] > 0
+    (key) => Number((data[0] as Record<string, number | string>)[key]) > 0
   );
 
   return (

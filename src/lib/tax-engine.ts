@@ -4,7 +4,6 @@ import {
   BBG_KV_PV,
   ENTLASTUNGSBETRAG_ALLEINERZIEHENDE,
   GRUNDFREIBETRAG,
-  KINDERFREIBETRAG_SOLI,
   KV_GENERAL_RATE,
   PV_BASE_RATE,
   PV_CHILD_DISCOUNT,
@@ -21,7 +20,6 @@ import {
   TAX_ZONE_4_END,
   getArbeitnehmerPauschbetragForClass,
   getBBGRvAv,
-  getGrundfreibetragForClass,
   getKirchensteuerRate,
   getSonderausgabenPauschbetragForClass,
 } from './constants';
@@ -124,7 +122,7 @@ export function calculateLohnsteuer(
   annualGross: number,
   taxClass: Steuerklasse,
   state: Bundesland,
-  childrenCount: number,
+  _childrenCount: number,
   kvRate: number,
   zusatzbeitrag: number,
   isGesetzlich: boolean,
@@ -168,15 +166,9 @@ export function calculateLohnsteuer(
 export function calculateSoli(
   lohnsteuerAnnual: number,
   taxClass: Steuerklasse,
-  childrenCount: number,
+  _childrenCount: number,
 ): number {
   if (lohnsteuerAnnual <= 0) return 0;
-
-  // Kinderfreibetrag reduces the reference tax for Soli calculation
-  const kinderfreibetragReduction = childrenCount * KINDERFREIBETRAG_SOLI;
-  // Note: the Kinderfreibetrag for Soli is applied to the reference Lohnsteuer
-  // by reducing the taxable income and recalculating. For simplicity in a payroll
-  // calculator, we use the Freigrenze approach directly.
 
   const freigrenze = taxClass === 3 ? SOLI_FREIGRENZE_MARRIED : SOLI_FREIGRENZE_SINGLE;
 

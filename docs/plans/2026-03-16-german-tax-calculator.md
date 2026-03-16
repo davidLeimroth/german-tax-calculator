@@ -115,14 +115,14 @@ A beautiful, user-friendly German salary tax calculator built with Astro + React
 
 ### Task 7: Verify acceptance criteria
 
-- [ ] Manual test: enter a gross salary of 50,000 EUR/year, Steuerklasse I, verify net salary is in a plausible range (~30,000-33,000 EUR)
-- [ ] Manual test: switch between tax classes and verify chart updates instantly
-- [ ] Manual test: verify mobile layout works on 375px width
-- [ ] Manual test: verify dark/light theme toggle works
-- [ ] Run full test suite with `npx vitest run`
-- [ ] Run linter with `npx astro check`
-- [ ] Build the site with `npx astro build` and verify static output works
-- [ ] Verify GitHub Pages deployment workflow is correct
+- [x] Manual test: enter a gross salary of 50,000 EUR/year, Steuerklasse I, verify net salary is in a plausible range (~30,000-33,000 EUR)
+- [x] Manual test: switch between tax classes and verify chart updates instantly
+- [x] Manual test: verify mobile layout works on 375px width
+- [x] Manual test: verify dark/light theme toggle works
+- [x] Run full test suite with `npx vitest run`
+- [x] Run linter with `npx astro check`
+- [x] Build the site with `npx astro build` and verify static output works
+- [x] Verify GitHub Pages deployment workflow is correct
 
 ### Task 8: Update documentation
 

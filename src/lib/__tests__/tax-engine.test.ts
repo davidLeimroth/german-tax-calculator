@@ -19,9 +19,6 @@ import {
   KV_GENERAL_RATE,
   MINIJOB_THRESHOLD_ANNUAL,
   RV_RATE,
-  TAX_ZONE_2_END,
-  TAX_ZONE_3_END,
-  TAX_ZONE_4_END,
 } from '../constants';
 
 function makeInput(overrides: Partial<TaxInput> = {}): TaxInput {

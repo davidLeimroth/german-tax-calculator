@@ -16,10 +16,10 @@ describe('Astro configuration', () => {
     const resolved = config.default;
 
     expect(resolved.integrations).toBeDefined();
-    expect(resolved.integrations.length).toBeGreaterThanOrEqual(1);
+    expect(resolved.integrations!.length).toBeGreaterThanOrEqual(1);
 
-    const reactIntegration = resolved.integrations.find(
-      (i: { name: string }) => i.name === '@astrojs/react'
+    const reactIntegration = resolved.integrations!.find(
+      (i: unknown) => i && typeof i === 'object' && 'name' in i && (i as { name: string }).name === '@astrojs/react'
     );
     expect(reactIntegration).toBeDefined();
   });
@@ -29,7 +29,7 @@ describe('Astro configuration', () => {
     const resolved = config.default;
 
     expect(resolved.vite).toBeDefined();
-    expect(resolved.vite.plugins).toBeDefined();
-    expect(resolved.vite.plugins.length).toBeGreaterThanOrEqual(1);
+    expect(resolved.vite!.plugins).toBeDefined();
+    expect(resolved.vite!.plugins!.length).toBeGreaterThanOrEqual(1);
   });
 });
