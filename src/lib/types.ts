@@ -1,3 +1,5 @@
+import type { TaxYear } from './tax-years';
+
 /** German federal states (Bundeslaender) */
 export type Bundesland =
   | 'Baden-Wuerttemberg'
@@ -26,10 +28,17 @@ export type HealthInsuranceType = 'gesetzlich' | 'privat';
 /** Whether the state is in the former East or West Germany (for BBG) */
 export type Region = 'West' | 'Ost';
 
+/** Salary input mode */
+export type SalaryMode = 'annual' | 'monthly';
+
 /** Input parameters for the tax calculator */
 export interface TaxInput {
-  /** Annual gross salary in EUR */
-  annualGrossSalary: number;
+  /** Gross salary in EUR (interpretation depends on salaryMode) */
+  grossSalary: number;
+  /** Whether the salary is annual or monthly */
+  salaryMode: SalaryMode;
+  /** Tax year */
+  taxYear: TaxYear;
   /** Tax class (Steuerklasse) */
   taxClass: Steuerklasse;
   /** Federal state */
@@ -42,7 +51,7 @@ export interface TaxInput {
   healthInsuranceType: HealthInsuranceType;
   /** Additional health insurance contribution rate (Zusatzbeitrag) as decimal, e.g. 0.017 for 1.7% */
   zusatzbeitragRate: number;
-  /** Private health insurance monthly amount (only relevant if healthInsuranceType is 'privat') */
+  /** Private health insurance employee's own monthly premium (only relevant if healthInsuranceType is 'privat') */
   privatHealthInsuranceMonthly?: number;
   /** Age of the person (for Pflegeversicherung surcharge) */
   age?: number;
