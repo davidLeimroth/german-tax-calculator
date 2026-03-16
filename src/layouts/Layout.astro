@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = 'Brutto-Netto-Rechner | German Tax Calculator',
-  description = 'Calculate your German net salary from gross income. Includes Lohnsteuer, Solidaritaetszuschlag, and all social insurance contributions.',
+  title = 'Brutto-Netto-Rechner | Gehaltsrechner fuer Deutschland',
+  description = 'Berechnen Sie Ihr Nettogehalt aus dem Bruttoeinkommen. Inklusive Lohnsteuer, Solidaritaetszuschlag und allen Sozialversicherungsbeitraegen.',
 } = Astro.props;
 
 const siteUrl = 'https://davidleimroth.github.io/steuerrechner';
@@ -20,6 +20,7 @@ const siteUrl = 'https://davidleimroth.github.io/steuerrechner';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/steuerrechner/favicon.svg" />
+    <link rel="icon" href="/steuerrechner/favicon.ico" sizes="32x32" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <meta name="robots" content="index, follow" />

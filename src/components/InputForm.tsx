@@ -167,7 +167,7 @@ export default function InputForm({ onChange }: InputFormProps) {
             >
               {BUNDESLAENDER.map((bl) => (
                 <option key={bl} value={bl}>
-                  {bl.replace(/-/g, '-')}
+                  {bl.replace(/-/g, ' ')}
                 </option>
               ))}
             </select>

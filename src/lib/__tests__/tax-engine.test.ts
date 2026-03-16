@@ -90,46 +90,61 @@ describe('calculateEinkommensteuer', () => {
 
 describe('calculateLohnsteuer', () => {
   it('returns 0 for zero salary', () => {
-    expect(calculateLohnsteuer(0, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true)).toBe(0);
+    expect(calculateLohnsteuer(0, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025)).toBe(0);
   });
 
   it('tax class III produces lower tax than class I for same income', () => {
-    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
-    const taxIII = calculateLohnsteuer(50000, 3, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
+    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
+    const taxIII = calculateLohnsteuer(50000, 3, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
     expect(taxIII).toBeLessThan(taxI);
   });
 
   it('tax class V produces higher tax than class I', () => {
-    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
-    const taxV = calculateLohnsteuer(50000, 5, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
+    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
+    const taxV = calculateLohnsteuer(50000, 5, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
     expect(taxV).toBeGreaterThan(taxI);
   });
 
   it('tax class II produces lower tax than class I (single parent relief)', () => {
-    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 1, KV_GENERAL_RATE, 0.025, true);
-    const taxII = calculateLohnsteuer(50000, 2, 'Bayern', 1, KV_GENERAL_RATE, 0.025, true);
+    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 1, KV_GENERAL_RATE, 0.025);
+    const taxII = calculateLohnsteuer(50000, 2, 'Bayern', 1, KV_GENERAL_RATE, 0.025);
     expect(taxII).toBeLessThan(taxI);
   });
 
   it('tax class VI has no Pauschbetraege and produces the highest tax', () => {
-    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
-    const taxVI = calculateLohnsteuer(50000, 6, 'Bayern', 0, KV_GENERAL_RATE, 0.025, true);
+    const taxI = calculateLohnsteuer(50000, 1, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
+    const taxVI = calculateLohnsteuer(50000, 6, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
     expect(taxVI).toBeGreaterThan(taxI);
+  });
+
+  it('tax class II Entlastungsbetrag scales with children count', () => {
+    const tax1Child = calculateLohnsteuer(50000, 2, 'Bayern', 1, KV_GENERAL_RATE, 0.025);
+    const tax3Children = calculateLohnsteuer(50000, 2, 'Bayern', 3, KV_GENERAL_RATE, 0.025);
+    // More children = higher Entlastungsbetrag = lower tax
+    expect(tax3Children).toBeLessThan(tax1Child);
+  });
+
+  it('tax class V gets Sonderausgaben-Pauschbetrag (36 EUR)', () => {
+    // Class V should get the 36 EUR Sonderausgaben-Pauschbetrag
+    // Class VI should NOT get it - so Class VI tax should be slightly higher
+    const taxV = calculateLohnsteuer(50000, 5, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
+    const taxVI = calculateLohnsteuer(50000, 6, 'Bayern', 0, KV_GENERAL_RATE, 0.025);
+    expect(taxVI).toBeGreaterThan(taxV);
   });
 });
 
 describe('calculateSoli', () => {
   it('returns 0 when Lohnsteuer is below Freigrenze', () => {
-    expect(calculateSoli(10000, 1, 0)).toBe(0);
-    expect(calculateSoli(19950, 1, 0)).toBe(0);
+    expect(calculateSoli(10000, 1)).toBe(0);
+    expect(calculateSoli(19950, 1)).toBe(0);
   });
 
   it('returns 0 for zero Lohnsteuer', () => {
-    expect(calculateSoli(0, 1, 0)).toBe(0);
+    expect(calculateSoli(0, 1)).toBe(0);
   });
 
   it('applies Milderungszone just above Freigrenze', () => {
-    const soli = calculateSoli(20000, 1, 0);
+    const soli = calculateSoli(20000, 1);
     // Just 50 EUR above Freigrenze, Milderungszone caps the Soli
     const milderung = (20000 - 19950) * 0.119;
     const fullSoli = 20000 * 0.055;
@@ -138,14 +153,18 @@ describe('calculateSoli', () => {
 
   it('uses higher Freigrenze for class III', () => {
     // 30000 is below married Freigrenze (39900) but above single (19950)
-    expect(calculateSoli(30000, 3, 0)).toBe(0);
-    expect(calculateSoli(30000, 1, 0)).toBeGreaterThan(0);
+    expect(calculateSoli(30000, 3)).toBe(0);
+    expect(calculateSoli(30000, 1)).toBeGreaterThan(0);
   });
 
   it('returns full 5.5% for high Lohnsteuer', () => {
     const highTax = 100000;
-    const soli = calculateSoli(highTax, 1, 0);
+    const soli = calculateSoli(highTax, 1);
     expect(soli).toBeCloseTo(highTax * 0.055, 2);
+  });
+
+  it('returns 0 for negative Lohnsteuer', () => {
+    expect(calculateSoli(-1000, 1)).toBe(0);
   });
 });
 
@@ -203,6 +222,18 @@ describe('calculateKrankenversicherung', () => {
     // Private: 500/month = 6000/year total
     expect(employee + employer).toBeCloseTo(6000, 0);
     expect(employer).toBeGreaterThan(0);
+  });
+
+  it('handles private insurance with zero monthly amount', () => {
+    const [employee, employer] = calculateKrankenversicherung(
+      50000,
+      KV_GENERAL_RATE,
+      0.025,
+      false,
+      0,
+    );
+    expect(employee).toBe(0);
+    expect(employer).toBe(0);
   });
 });
 
@@ -386,5 +417,70 @@ describe('calculateNetSalary', () => {
     const input = makeInput();
     const result = calculateNetSalary(input);
     expect(result.input).toEqual(input);
+  });
+
+  it('Kinderfreibetrag reduces Soli for parents', () => {
+    // With children, the Soli should be lower because Kinderfreibetrag
+    // reduces the hypothetical Lohnsteuer used for Soli calculation
+    const noChildren = calculateNetSalary(makeInput({
+      annualGrossSalary: 120000,
+      childrenCount: 0,
+    }));
+    const withChildren = calculateNetSalary(makeInput({
+      annualGrossSalary: 120000,
+      childrenCount: 2,
+    }));
+    expect(withChildren.soliAnnual).toBeLessThan(noChildren.soliAnnual);
+  });
+
+  it('Kinderfreibetrag reduces Kirchensteuer for parents', () => {
+    const noChildren = calculateNetSalary(makeInput({
+      annualGrossSalary: 50000,
+      churchMember: true,
+      childrenCount: 0,
+    }));
+    const withChildren = calculateNetSalary(makeInput({
+      annualGrossSalary: 50000,
+      churchMember: true,
+      childrenCount: 2,
+    }));
+    expect(withChildren.kirchensteuerAnnual).toBeLessThan(noChildren.kirchensteuerAnnual);
+  });
+
+  it('Entlastungsbetrag scales with children count for class II', () => {
+    const result1Child = calculateNetSalary(makeInput({
+      taxClass: 2,
+      childrenCount: 1,
+    }));
+    const result3Children = calculateNetSalary(makeInput({
+      taxClass: 2,
+      childrenCount: 3,
+    }));
+    // More children = higher Entlastungsbetrag = lower Lohnsteuer = higher net
+    expect(result3Children.annualNet).toBeGreaterThan(result1Child.annualNet);
+  });
+
+  it('handles private health insurance through full calculation', () => {
+    const result = calculateNetSalary(makeInput({
+      healthInsuranceType: 'privat',
+      privatHealthInsuranceMonthly: 500,
+    }));
+    expect(result.annualNet).toBeGreaterThan(0);
+    expect(result.annualNet).toBeLessThan(50000);
+    // PKV: employee + employer should total 6000/year (500*12)
+    expect(
+      result.krankenversicherungEmployeeAnnual + result.krankenversicherungEmployerAnnual,
+    ).toBeCloseTo(6000, 0);
+  });
+
+  it('handles East German states (Sachsen)', () => {
+    const result = calculateNetSalary(makeInput({ state: 'Sachsen' }));
+    expect(result.annualNet).toBeGreaterThan(0);
+    expect(result.annualNet).toBeLessThan(50000);
+    // Sachsen PV: employee pays more than in Bayern
+    const resultBayern = calculateNetSalary(makeInput({ state: 'Bayern' }));
+    expect(result.pflegeversicherungEmployeeAnnual).toBeGreaterThan(
+      resultBayern.pflegeversicherungEmployeeAnnual,
+    );
   });
 });

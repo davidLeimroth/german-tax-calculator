@@ -1,24 +1,10 @@
 import { ResponsiveBar } from '@nivo/bar';
 import type { TaxResult } from '../lib/types';
+import { formatEur, CHART_COLORS } from '../lib/format';
 
 interface BreakdownBarProps {
   result: TaxResult;
 }
-
-function formatEur(value: number): string {
-  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-}
-
-const COLORS: Record<string, string> = {
-  Netto: '#22c55e',
-  Lohnsteuer: '#ef4444',
-  Soli: '#f97316',
-  Kirchensteuer: '#eab308',
-  Krankenversicherung: '#3b82f6',
-  Pflegeversicherung: '#8b5cf6',
-  Rentenversicherung: '#06b6d4',
-  Arbeitslosenversicherung: '#ec4899',
-};
 
 export default function BreakdownBar({ result }: BreakdownBarProps) {
   const keys = [
@@ -32,17 +18,17 @@ export default function BreakdownBar({ result }: BreakdownBarProps) {
     'Arbeitslosenversicherung',
   ];
 
+  const deductionMap: Record<string, number> = {};
+  for (const d of result.deductions) {
+    const shortName = d.name === 'Solidaritaetszuschlag' ? 'Soli' : d.name;
+    deductionMap[shortName] = d.employeeShareMonthly;
+  }
+
   const data = [
     {
       category: 'Monatlich',
-      Netto: Math.round(result.monthlyNet * 100) / 100,
-      Lohnsteuer: Math.round((result.lohnsteuerAnnual / 12) * 100) / 100,
-      Soli: Math.round((result.soliAnnual / 12) * 100) / 100,
-      Kirchensteuer: Math.round((result.kirchensteuerAnnual / 12) * 100) / 100,
-      Krankenversicherung: Math.round((result.krankenversicherungEmployeeAnnual / 12) * 100) / 100,
-      Pflegeversicherung: Math.round((result.pflegeversicherungEmployeeAnnual / 12) * 100) / 100,
-      Rentenversicherung: Math.round((result.rentenversicherungEmployeeAnnual / 12) * 100) / 100,
-      Arbeitslosenversicherung: Math.round((result.arbeitslosenversicherungEmployeeAnnual / 12) * 100) / 100,
+      Netto: result.monthlyNet,
+      ...deductionMap,
     },
   ];
 
@@ -62,7 +48,7 @@ export default function BreakdownBar({ result }: BreakdownBarProps) {
         layout="horizontal"
         valueScale={{ type: 'linear' }}
         indexScale={{ type: 'band', round: true }}
-        colors={({ id }) => COLORS[id as string] || '#999'}
+        colors={({ id }) => CHART_COLORS[id as string] || '#999'}
         borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
         axisBottom={{
           tickSize: 5,

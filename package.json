@@ -9,32 +9,33 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.8",
     "@astrojs/react": "^5.0.0",
     "@nivo/bar": "^0.99.0",
     "@nivo/pie": "^0.99.0",
-    "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-form": "^1.28.5",
     "@tanstack/react-table": "^8.21.3",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
     "astro": "^6.0.5",
-    "daisyui": "^5.5.19",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwindcss": "^4.2.1",
-    "typescript": "^5.9.3"
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.8",
+    "@tailwindcss/vite": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "daisyui": "^5.5.19",
     "jsdom": "^29.0.0",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.0"
   }
 }

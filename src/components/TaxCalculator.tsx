@@ -3,13 +3,10 @@ import InputForm, { DEFAULT_VALUES, formValuesToTaxInput } from './InputForm';
 import type { InputFormValues } from './InputForm';
 import { calculateNetSalary } from '../lib/tax-engine';
 import type { TaxResult } from '../lib/types';
+import { formatEur } from '../lib/format';
 import SalaryChart from './SalaryChart';
 import BreakdownBar from './BreakdownBar';
 import BreakdownTable from './BreakdownTable';
-
-function formatEur(value: number): string {
-  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-}
 
 function ResultsSummary({ result }: { result: TaxResult }) {
   return (

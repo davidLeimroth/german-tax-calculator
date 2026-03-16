@@ -8,6 +8,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import type { TaxResult } from '../lib/types';
+import { formatEur } from '../lib/format';
 
 interface TableRow {
   name: string;
@@ -15,12 +16,6 @@ interface TableRow {
   employerMonthly: number;
   totalMonthly: number;
   percentOfGross: number;
-  isSummary?: boolean;
-  isNet?: boolean;
-}
-
-function formatEur(value: number): string {
-  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }
 
 const columnHelper = createColumnHelper<TableRow>();

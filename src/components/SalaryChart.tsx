@@ -1,75 +1,30 @@
 import { ResponsivePie } from '@nivo/pie';
 import type { TaxResult } from '../lib/types';
+import { formatEur, CHART_COLORS } from '../lib/format';
 
 interface SalaryChartProps {
   result: TaxResult;
 }
-
-function formatEur(value: number): string {
-  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-}
-
-const COLORS: Record<string, string> = {
-  netto: '#22c55e',        // green for net pay
-  lohnsteuer: '#ef4444',   // red
-  soli: '#f97316',         // orange
-  kirchensteuer: '#eab308',// yellow
-  kv: '#3b82f6',           // blue
-  pv: '#8b5cf6',           // purple
-  rv: '#06b6d4',           // cyan
-  av: '#ec4899',           // pink
-};
 
 export default function SalaryChart({ result }: SalaryChartProps) {
   const data = [
     {
       id: 'Netto',
       label: 'Netto',
-      value: Math.round(result.monthlyNet * 100) / 100,
-      color: COLORS.netto,
+      value: result.monthlyNet,
+      color: CHART_COLORS.Netto,
     },
-    {
-      id: 'Lohnsteuer',
-      label: 'Lohnsteuer',
-      value: Math.round((result.lohnsteuerAnnual / 12) * 100) / 100,
-      color: COLORS.lohnsteuer,
-    },
-    {
-      id: 'Soli',
-      label: 'Solidaritaetszuschlag',
-      value: Math.round((result.soliAnnual / 12) * 100) / 100,
-      color: COLORS.soli,
-    },
-    {
-      id: 'Kirchensteuer',
-      label: 'Kirchensteuer',
-      value: Math.round((result.kirchensteuerAnnual / 12) * 100) / 100,
-      color: COLORS.kirchensteuer,
-    },
-    {
-      id: 'Krankenversicherung',
-      label: 'Krankenversicherung',
-      value: Math.round((result.krankenversicherungEmployeeAnnual / 12) * 100) / 100,
-      color: COLORS.kv,
-    },
-    {
-      id: 'Pflegeversicherung',
-      label: 'Pflegeversicherung',
-      value: Math.round((result.pflegeversicherungEmployeeAnnual / 12) * 100) / 100,
-      color: COLORS.pv,
-    },
-    {
-      id: 'Rentenversicherung',
-      label: 'Rentenversicherung',
-      value: Math.round((result.rentenversicherungEmployeeAnnual / 12) * 100) / 100,
-      color: COLORS.rv,
-    },
-    {
-      id: 'Arbeitslosenversicherung',
-      label: 'Arbeitslosenversicherung',
-      value: Math.round((result.arbeitslosenversicherungEmployeeAnnual / 12) * 100) / 100,
-      color: COLORS.av,
-    },
+    ...result.deductions
+      .filter((d) => d.employeeShareMonthly > 0)
+      .map((d) => {
+        const shortName = d.name === 'Solidaritaetszuschlag' ? 'Soli' : d.name;
+        return {
+          id: shortName,
+          label: d.name,
+          value: d.employeeShareMonthly,
+          color: CHART_COLORS[shortName] || '#999',
+        };
+      }),
   ].filter((d) => d.value > 0);
 
   return (
@@ -97,7 +52,9 @@ export default function SalaryChart({ result }: SalaryChartProps) {
             <br />
             {formatEur(datum.value)}
             <br />
-            {((datum.value / result.monthlyGross) * 100).toFixed(1)}% vom Brutto
+            {result.monthlyGross > 0
+              ? `${((datum.value / result.monthlyGross) * 100).toFixed(1)}% vom Brutto`
+              : ''}
           </div>
         )}
         animate={true}

@@ -126,25 +126,6 @@ export function getBBGRvAv(state: Bundesland): number {
 }
 
 /**
- * Tax class specific settings.
- * Grundfreibetrag is doubled for class III (Splittingtabelle).
- * Class V/VI have no Grundfreibetrag.
- */
-export function getGrundfreibetragForClass(taxClass: Steuerklasse): number {
-  switch (taxClass) {
-    case 1:
-    case 2:
-    case 4:
-      return GRUNDFREIBETRAG;
-    case 3:
-      return GRUNDFREIBETRAG * 2;
-    case 5:
-    case 6:
-      return 0;
-  }
-}
-
-/**
  * Arbeitnehmer-Pauschbetrag per tax class.
  * Class 6 gets no Pauschbetrag.
  */
@@ -154,13 +135,12 @@ export function getArbeitnehmerPauschbetragForClass(taxClass: Steuerklasse): num
 
 /**
  * Sonderausgaben-Pauschbetrag per tax class.
- * Class 3: doubled (72 EUR). Class 5/6: 0.
+ * Class 3: doubled (72 EUR). Class 6: 0. All others: 36 EUR.
  */
 export function getSonderausgabenPauschbetragForClass(taxClass: Steuerklasse): number {
   switch (taxClass) {
     case 3:
       return SONDERAUSGABEN_PAUSCHBETRAG * 2;
-    case 5:
     case 6:
       return 0;
     default:
@@ -170,9 +150,10 @@ export function getSonderausgabenPauschbetragForClass(taxClass: Steuerklasse): n
 
 /**
  * Entlastungsbetrag fuer Alleinerziehende (single parent relief) - Tax class II.
- * 2025: 4,260 EUR
+ * 2025: 4,260 EUR for the first child, +240 EUR per additional child.
  */
 export const ENTLASTUNGSBETRAG_ALLEINERZIEHENDE = 4260;
+export const ENTLASTUNGSBETRAG_ADDITIONAL_CHILD = 240;
 
 /**
  * Kinderfreibetrag per child (for Soli/Kirchensteuer check, not used directly in Lohnsteuer

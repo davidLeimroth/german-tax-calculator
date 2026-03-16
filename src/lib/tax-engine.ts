@@ -2,8 +2,10 @@ import type { Bundesland, DeductionItem, Steuerklasse, TaxInput, TaxResult } fro
 import {
   AV_RATE,
   BBG_KV_PV,
+  ENTLASTUNGSBETRAG_ADDITIONAL_CHILD,
   ENTLASTUNGSBETRAG_ALLEINERZIEHENDE,
   GRUNDFREIBETRAG,
+  KINDERFREIBETRAG_SOLI,
   KV_GENERAL_RATE,
   PV_BASE_RATE,
   PV_CHILD_DISCOUNT,
@@ -76,14 +78,13 @@ export function calculateEinkommensteuer(zvE: number): number {
 /**
  * Calculate the Vorsorgepauschale (insurance deduction allowance).
  * Simplified calculation used for monthly payroll.
+ * For PKV, uses the GKV-equivalent amount as an approximation.
  */
 function calculateVorsorgepauschale(
   annualGross: number,
-  taxClass: Steuerklasse,
   state: Bundesland,
   kvRate: number,
   zusatzbeitrag: number,
-  isGesetzlich: boolean,
 ): number {
   const bbgRvAv = getBBGRvAv(state);
   const rvBasis = Math.min(annualGross, bbgRvAv);
@@ -91,26 +92,54 @@ function calculateVorsorgepauschale(
   // Part 1: Rentenversicherung contribution (employee share)
   const rvPauschale = rvBasis * (RV_RATE / 2);
 
-  // Part 2: Krankenversicherung (simplified, employee share)
-  let kvPauschale = 0;
-  if (isGesetzlich) {
-    const kvBasis = Math.min(annualGross, BBG_KV_PV);
-    // Only the reduced rate (without Zusatzbeitrag) for Vorsorgepauschale basic part
-    kvPauschale = kvBasis * ((kvRate + zusatzbeitrag) / 2);
+  // Part 2: Krankenversicherung (employee share)
+  // For both GKV and PKV, use the GKV-equivalent as an approximation
+  const kvBasis = Math.min(annualGross, BBG_KV_PV);
+  const kvPauschale = kvBasis * ((kvRate + zusatzbeitrag) / 2);
+
+  return round2(rvPauschale + kvPauschale);
+}
+
+/**
+ * Compute the zu versteuerndes Einkommen (zvE) for a given salary and tax class.
+ * Shared helper used by calculateLohnsteuer and for Kinderfreibetrag adjustments.
+ */
+function computeZvE(
+  annualGross: number,
+  taxClass: Steuerklasse,
+  state: Bundesland,
+  childrenCount: number,
+  kvRate: number,
+  zusatzbeitrag: number,
+): number {
+  const arbeitnehmerPauschbetrag = getArbeitnehmerPauschbetragForClass(taxClass);
+  const sonderausgabenPauschbetrag = getSonderausgabenPauschbetragForClass(taxClass);
+  const vorsorgepauschale = calculateVorsorgepauschale(annualGross, state, kvRate, zusatzbeitrag);
+
+  let zvE = annualGross - arbeitnehmerPauschbetrag - sonderausgabenPauschbetrag - vorsorgepauschale;
+
+  // Tax class II: Entlastungsbetrag fuer Alleinerziehende (scales with children)
+  if (taxClass === 2) {
+    zvE -= ENTLASTUNGSBETRAG_ALLEINERZIEHENDE + Math.max(0, childrenCount - 1) * ENTLASTUNGSBETRAG_ADDITIONAL_CHILD;
   }
 
-  // Part 3: PV is not included in Vorsorgepauschale for simplification in payroll
-  // The simplified method: max of (actual employee contributions) vs. calculated Vorsorgepauschale
-  // For our calculator, we use a simplified approach
-  let total = rvPauschale + kvPauschale;
+  return Math.max(0, zvE);
+}
 
-  // For class III, the Vorsorgepauschale isn't doubled
-  // For class V/VI, it's still calculated normally
+/**
+ * Calculate the Einkommensteuer for a given zvE, respecting tax class splitting rules.
+ * Class V/VI: no Grundfreibetrag benefit - offset the built-in Zone 1 exemption.
+ */
+function computeTaxForZvE(zvE: number, taxClass: Steuerklasse): number {
   if (taxClass === 3) {
-    // no special handling needed, calculated on individual income
+    // Splittingtabelle: halve the zvE, calculate tax, then double
+    return calculateEinkommensteuer(zvE / 2) * 2;
   }
-
-  return round2(total);
+  if (taxClass === 5 || taxClass === 6) {
+    // Class V/VI have no Grundfreibetrag - add it back to counteract Zone 1 exemption
+    return calculateEinkommensteuer(zvE + GRUNDFREIBETRAG);
+  }
+  return calculateEinkommensteuer(zvE);
 }
 
 /**
@@ -122,40 +151,14 @@ export function calculateLohnsteuer(
   annualGross: number,
   taxClass: Steuerklasse,
   state: Bundesland,
-  _childrenCount: number,
+  childrenCount: number,
   kvRate: number,
   zusatzbeitrag: number,
-  isGesetzlich: boolean,
 ): number {
   if (annualGross <= 0) return 0;
 
-  const arbeitnehmerPauschbetrag = getArbeitnehmerPauschbetragForClass(taxClass);
-  const sonderausgabenPauschbetrag = getSonderausgabenPauschbetragForClass(taxClass);
-  const vorsorgepauschale = calculateVorsorgepauschale(
-    annualGross,
-    taxClass,
-    state,
-    kvRate,
-    zusatzbeitrag,
-    isGesetzlich,
-  );
-
-  let zvE = annualGross - arbeitnehmerPauschbetrag - sonderausgabenPauschbetrag - vorsorgepauschale;
-
-  // Tax class II: Entlastungsbetrag fuer Alleinerziehende
-  if (taxClass === 2) {
-    zvE -= ENTLASTUNGSBETRAG_ALLEINERZIEHENDE;
-  }
-
-  zvE = Math.max(0, zvE);
-
-  if (taxClass === 3) {
-    // Splittingtabelle: halve the zvE, calculate tax, then double
-    const halfZvE = zvE / 2;
-    return calculateEinkommensteuer(halfZvE) * 2;
-  }
-
-  return calculateEinkommensteuer(zvE);
+  const zvE = computeZvE(annualGross, taxClass, state, childrenCount, kvRate, zusatzbeitrag);
+  return computeTaxForZvE(zvE, taxClass);
 }
 
 /**
@@ -166,7 +169,6 @@ export function calculateLohnsteuer(
 export function calculateSoli(
   lohnsteuerAnnual: number,
   taxClass: Steuerklasse,
-  _childrenCount: number,
 ): number {
   if (lohnsteuerAnnual <= 0) return 0;
 
@@ -326,14 +328,22 @@ export function calculateNetSalary(input: TaxInput): TaxResult {
     childrenCount,
     kvRate,
     zusatzbeitragRate,
-    isGesetzlich,
   );
 
-  // Calculate Soli
-  const soliAnnual = calculateSoli(lohnsteuerAnnual, taxClass, childrenCount);
+  // Calculate hypothetical Lohnsteuer with Kinderfreibetrag for Soli/Kirchensteuer
+  // Per German tax law, Kinderfreibetrag reduces the Lohnsteuer basis for Soli and KiSt
+  let lohnsteuerForSoliKiSt = lohnsteuerAnnual;
+  if (childrenCount > 0) {
+    const zvE = computeZvE(annualGrossSalary, taxClass, state, childrenCount, kvRate, zusatzbeitragRate);
+    const reducedZvE = Math.max(0, zvE - childrenCount * KINDERFREIBETRAG_SOLI);
+    lohnsteuerForSoliKiSt = computeTaxForZvE(reducedZvE, taxClass);
+  }
 
-  // Calculate Kirchensteuer
-  const kirchensteuerAnnual = calculateKirchensteuer(lohnsteuerAnnual, state, churchMember);
+  // Calculate Soli on Kinderfreibetrag-reduced Lohnsteuer
+  const soliAnnual = calculateSoli(lohnsteuerForSoliKiSt, taxClass);
+
+  // Calculate Kirchensteuer on Kinderfreibetrag-reduced Lohnsteuer
+  const kirchensteuerAnnual = calculateKirchensteuer(lohnsteuerForSoliKiSt, state, churchMember);
 
   // Calculate social insurance
   const [kvEmployee, kvEmployer] = calculateKrankenversicherung(
