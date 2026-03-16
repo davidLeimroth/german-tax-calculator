@@ -76,6 +76,29 @@ export function calculateEinkommensteuer(zvE: number): number {
 }
 
 /**
+ * Compute the Pflegeversicherung employee rate based on state, children, and age.
+ * Shared by both Vorsorgepauschale and the actual PV calculation.
+ */
+function computePvEmployeeRate(
+  state: Bundesland,
+  childrenCount: number,
+  age: number,
+): number {
+  let rate = PV_BASE_RATE / 2;
+  if (state === 'Sachsen') {
+    rate += PV_SACHSEN_EXTRA_EMPLOYEE;
+  }
+  if (childrenCount === 0 && age >= 23) {
+    rate += PV_CHILDLESS_SURCHARGE;
+  }
+  if (childrenCount >= 2) {
+    const discountChildren = Math.min(childrenCount, PV_MAX_DISCOUNT_CHILDREN) - 1;
+    rate -= discountChildren * PV_CHILD_DISCOUNT;
+  }
+  return Math.max(0, rate);
+}
+
+/**
  * Calculate the Vorsorgepauschale (insurance deduction allowance).
  * Simplified calculation used for monthly payroll.
  * For PKV, uses the GKV-equivalent amount as an approximation.
@@ -101,18 +124,7 @@ function calculateVorsorgepauschale(
   const kvPauschale = kvPvBasis * ((kvRate + zusatzbeitrag) / 2);
 
   // Part 3: Pflegeversicherung (employee share)
-  let pvEmployeeRate = PV_BASE_RATE / 2;
-  if (state === 'Sachsen') {
-    pvEmployeeRate += PV_SACHSEN_EXTRA_EMPLOYEE;
-  }
-  if (childrenCount === 0 && age >= 23) {
-    pvEmployeeRate += PV_CHILDLESS_SURCHARGE;
-  }
-  if (childrenCount >= 2) {
-    const discountChildren = Math.min(childrenCount, PV_MAX_DISCOUNT_CHILDREN) - 1;
-    pvEmployeeRate -= discountChildren * PV_CHILD_DISCOUNT;
-  }
-  pvEmployeeRate = Math.max(0, pvEmployeeRate);
+  const pvEmployeeRate = computePvEmployeeRate(state, childrenCount, age);
   const pvPauschale = kvPvBasis * pvEmployeeRate;
 
   return round2(rvPauschale + kvPauschale + pvPauschale);
@@ -263,28 +275,15 @@ export function calculatePflegeversicherung(
 ): [number, number] {
   const basis = Math.min(annualGross, BBG_KV_PV);
 
-  let employeeRate = PV_BASE_RATE / 2;
+  const employeeRate = computePvEmployeeRate(state, childrenCount, age);
   let employerRate = PV_BASE_RATE / 2;
 
   // Sachsen special rule: shift 0.5% from employer to employee
   if (state === 'Sachsen') {
-    employeeRate += PV_SACHSEN_EXTRA_EMPLOYEE;
     employerRate -= PV_SACHSEN_EXTRA_EMPLOYEE;
   }
 
-  // Childless surcharge (employee only, age >= 23)
-  if (childrenCount === 0 && age >= 23) {
-    employeeRate += PV_CHILDLESS_SURCHARGE;
-  }
-
-  // Child discount (from 2nd child onwards, employee only)
-  if (childrenCount >= 2) {
-    const discountChildren = Math.min(childrenCount, PV_MAX_DISCOUNT_CHILDREN) - 1;
-    employeeRate -= discountChildren * PV_CHILD_DISCOUNT;
-  }
-
   // Ensure rates don't go below 0
-  employeeRate = Math.max(0, employeeRate);
   employerRate = Math.max(0, employerRate);
 
   return [round2(basis * employeeRate), round2(basis * employerRate)];

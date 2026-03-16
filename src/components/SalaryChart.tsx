@@ -7,11 +7,13 @@ interface SalaryChartProps {
 }
 
 export default function SalaryChart({ result }: SalaryChartProps) {
+  const monthlyNet = Math.max(0, result.monthlyNet);
+
   const data = [
     {
       id: 'Netto',
       label: 'Netto',
-      value: result.monthlyNet,
+      value: monthlyNet,
       color: CHART_COLORS.Netto,
     },
     ...result.deductions
