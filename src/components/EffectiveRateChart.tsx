@@ -167,10 +167,10 @@ export default function EffectiveRateChart({ baseInput }: EffectiveRateChartProp
                     <tbody>
                       {slice.points.map((point, idx) => {
                         const val = point.data.y as number;
-                        const pointId = String(point.serieId || point.id || '');
+                        const pointId = String(point.seriesId || point.id || '');
                         const id = pointId.replace(/\.\d+$/, '');
                         const name = seriesLabelMap[id] || id;
-                        const color = seriesColorMap[id] || point.serieColor || '#999';
+                        const color = seriesColorMap[id] || point.seriesColor || '#999';
                         return (
                           <tr key={idx}>
                             <td className="pr-2 py-0.5">

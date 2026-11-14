@@ -204,11 +204,11 @@ export default function InsuranceComparisonChart({ baseInput }: InsuranceCompari
             sliceTooltip={({ slice }) => {
               const displayIncome = slice.points[0]?.data.x as number;
               const gkvPoint = slice.points.find((p) => {
-                const id = String(p.serieId || p.id || '').replace(/\.\d+$/, '');
+                const id = String(p.seriesId || p.id || '').replace(/\.\d+$/, '');
                 return id === SERIES_KEYS.gkv;
               });
               const pkvPoint = slice.points.find((p) => {
-                const id = String(p.serieId || p.id || '').replace(/\.\d+$/, '');
+                const id = String(p.seriesId || p.id || '').replace(/\.\d+$/, '');
                 return id === SERIES_KEYS.pkv;
               });
               const gkvVal = (gkvPoint?.data.y as number) ?? 0;
@@ -222,10 +222,10 @@ export default function InsuranceComparisonChart({ baseInput }: InsuranceCompari
                     <tbody>
                       {slice.points.map((point, idx) => {
                         const val = point.data.y as number;
-                        const pointId = String(point.serieId || point.id || '');
+                        const pointId = String(point.seriesId || point.id || '');
                         const id = pointId.replace(/\.\d+$/, '');
                         const name = seriesLabelMap[id] || id;
-                        const color = seriesColorMap[id] || point.serieColor || '#999';
+                        const color = seriesColorMap[id] || point.seriesColor || '#999';
                         return (
                           <tr key={idx}>
                             <td className="pr-2 py-0.5">

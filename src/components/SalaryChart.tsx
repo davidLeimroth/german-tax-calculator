@@ -54,7 +54,7 @@ export default function SalaryChart({ result }: SalaryChartProps) {
         {t.chart.pieCaption}
       </span>
       <table className="sr-only">
-        <caption>{t.chart.pieTableCaption}</caption>
+        <caption>{isMonthly ? t.chart.pieTableCaption : t.chart.pieTableCaptionAnnual}</caption>
         <thead>
           <tr><th>{t.chart.category}</th><th>{t.chart.amount}</th><th>{t.chart.percentage}</th></tr>
         </thead>

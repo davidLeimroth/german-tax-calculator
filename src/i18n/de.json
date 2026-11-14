@@ -48,6 +48,7 @@
   "chart": {
     "pieCaption": "Gehaltsaufteilung als Kreisdiagramm",
     "pieTableCaption": "Monatliche Gehaltsaufteilung",
+    "pieTableCaptionAnnual": "Jährliche Gehaltsaufteilung",
     "barCaption": "Monatliche Aufschlüsselung als Balkendiagramm",
     "category": "Kategorie",
     "amount": "Betrag",

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import TaxClassChart from '../TaxClassChart';
@@ -5,16 +6,19 @@ import type { TaxInput } from '../../lib/types';
 import { I18nWrapper } from '../../test/i18n-wrapper';
 
 vi.mock('@nivo/bar', () => ({
-  ResponsiveBar: ({ data, indexBy, keys }: {
+  BarItem: ({ borderWidth }: { borderWidth: number }) => <span data-testid="bar-outline" data-border-width={borderWidth} />,
+  ResponsiveBar: ({ data, indexBy, keys, barComponent }: {
     data: Array<Record<string, unknown>>;
     indexBy: string;
     keys: string[];
+    barComponent?: (props: { bar: { data: { data: Record<string, unknown> } } }) => ReactNode;
   }) => (
     <div data-testid="mock-bar-chart">
       {data.map((d) => (
         <span key={String(d[indexBy])} data-testid={`bar-${d[indexBy]}`}>
           {String(d[indexBy])}: {keys.map((k) => String(d[k])).join(',')}
           {d.isCurrent ? ' (current)' : ''}
+          {barComponent?.({ bar: { data: { data: d } } })}
         </span>
       ))}
     </div>
@@ -62,6 +66,13 @@ describe('TaxClassChart', () => {
 
     const bar1 = screen.getByTestId('bar-1');
     expect(bar1.textContent).not.toContain('(current)');
+  });
+
+  it('outlines only the selected tax class', () => {
+    render(<TaxClassChart baseInput={getBaseInput({ taxClass: 3 })} />, { wrapper: I18nWrapper });
+
+    expect(screen.getByTestId('bar-3').querySelector('[data-testid="bar-outline"]')).toHaveAttribute('data-border-width', '2');
+    expect(screen.getByTestId('bar-1').querySelector('[data-testid="bar-outline"]')).toHaveAttribute('data-border-width', '0');
   });
 
   it('computes different net values for different tax classes', () => {

@@ -34,6 +34,17 @@ function getSampleResult(): TaxResult {
 }
 
 describe('SalaryChart', () => {
+  it.each([
+    ['annual', 'Jährliche Gehaltsaufteilung'],
+    ['monthly', 'Monatliche Gehaltsaufteilung'],
+  ] as const)('labels the accessible table for %s salary values', (salaryMode, caption) => {
+    const result = getSampleResult();
+    result.input.salaryMode = salaryMode;
+    render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
+
+    expect(screen.getByRole('table', { name: caption })).toBeInTheDocument();
+  });
+
   it('renders the pie chart container', () => {
     const result = getSampleResult();
     render(<SalaryChart result={result} />, { wrapper: I18nWrapper });
