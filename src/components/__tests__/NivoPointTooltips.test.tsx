@@ -51,7 +51,7 @@ describe('Nivo point tooltips', () => {
   it.each([
     ['effective rate', EffectiveRateChart, 'Effektiver Steuersatz'],
     ['income breakdown', IncomeBreakdownChart, 'Netto'],
-    ['insurance comparison', InsuranceComparisonChart, 'GKV'],
+    ['insurance comparison', InsuranceComparisonChart, 'GKV (Gesetzlich)'],
     ['marginal rate', MarginalRateChart, 'Netto'],
   ] as const)('uses the series identity and fallback color in %s', (_name, Chart, label) => {
     render(<Chart baseInput={baseInput} />, { wrapper: I18nWrapper });
