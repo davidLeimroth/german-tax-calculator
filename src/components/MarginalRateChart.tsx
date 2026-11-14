@@ -188,10 +188,10 @@ export default function MarginalRateChart({ baseInput }: MarginalRateChartProps)
                   <tbody>
                     {[...slice.points].reverse().map((point, idx) => {
                       const val = point.data.y as number;
-                      const pointId = String(point.serieId || point.id || '');
+                      const pointId = String(point.seriesId || point.id || '');
                       const id = pointId.replace(/\.\d+$/, '');
                       const name = translateSeriesId(id, t) || id;
-                      const color = CHART_COLORS[id] || point.serieColor || '#999';
+                      const color = CHART_COLORS[id] || point.seriesColor || '#999';
                       return (
                         <tr key={idx}>
                           <td className="pr-2 py-0.5">

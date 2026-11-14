@@ -80,10 +80,11 @@ The site is deployed to GitHub Pages via a GitHub Actions workflow. On every pus
 
 1. Installs dependencies
 2. Runs the test suite
-3. Builds the static site
-4. Deploys to GitHub Pages
+3. Checks types
+4. Builds the static site
+5. Deploys to GitHub Pages
 
-The site is served at the `/steuerrechner/` base path.
+The site is served at the `/german-tax-calculator/` base path.
 
 ## Project Structure
 

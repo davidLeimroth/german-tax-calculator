@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ResponsiveBar } from '@nivo/bar';
+import { BarItem, ResponsiveBar, type BarDatum, type BarItemProps } from '@nivo/bar';
 import type { TaxInput, Steuerklasse } from '../lib/types';
 import { calculateNetSalary } from '../lib/tax-engine';
 import { formatEur, NIVO_THEME } from '../lib/format';
@@ -13,10 +13,14 @@ const TAX_CLASSES: Steuerklasse[] = [1, 2, 3, 4, 5, 6];
 const BAR_COLOR = '#16a34a';
 const BAR_COLOR_DIMMED = 'rgba(22, 163, 74, 0.45)';
 
-interface TaxClassDataPoint {
+interface TaxClassDataPoint extends BarDatum {
   taxClass: string;
   net: number;
-  isCurrent: boolean;
+  isCurrent: number;
+}
+
+function TaxClassBar(props: BarItemProps<TaxClassDataPoint>) {
+  return <BarItem {...props} borderWidth={props.bar.data.data.isCurrent ? 2 : 0} />;
 }
 
 function computeTaxClassData(baseInput: TaxInput): TaxClassDataPoint[] {
@@ -28,7 +32,7 @@ function computeTaxClassData(baseInput: TaxInput): TaxClassDataPoint[] {
     return {
       taxClass: String(tc),
       net: Math.round(net),
-      isCurrent: tc === baseInput.taxClass,
+      isCurrent: Number(tc === baseInput.taxClass),
     };
   });
 }
@@ -46,7 +50,7 @@ export default function TaxClassChart({ baseInput }: TaxClassChartProps) {
         {t.chart.taxClassCaption}
       </span>
       <div style={{ height: 350 }}>
-        <ResponsiveBar
+        <ResponsiveBar<TaxClassDataPoint>
           data={data}
           keys={['net']}
           indexBy="taxClass"
@@ -55,11 +59,9 @@ export default function TaxClassChart({ baseInput }: TaxClassChartProps) {
           valueScale={{ type: 'linear' }}
           indexScale={{ type: 'band', round: true }}
           colors={({ data: d }) =>
-            (d as unknown as TaxClassDataPoint).isCurrent ? BAR_COLOR : BAR_COLOR_DIMMED
+            d.isCurrent ? BAR_COLOR : BAR_COLOR_DIMMED
           }
-          borderWidth={({ data: d }) =>
-            (d as unknown as TaxClassDataPoint).isCurrent ? 2 : 0
-          }
+          barComponent={TaxClassBar}
           borderColor={BAR_COLOR}
           axisBottom={{
             tickSize: 5,
@@ -85,7 +87,7 @@ export default function TaxClassChart({ baseInput }: TaxClassChartProps) {
           enableLabel={false}
           layers={['grid', 'axes', 'bars', 'markers', 'legends', ({ bars }) => {
             const currentBar = bars.find(
-              (bar) => (bar.data.data as unknown as TaxClassDataPoint).isCurrent
+              (bar) => bar.data.data.isCurrent
             );
             if (!currentBar) return null;
             return (
@@ -105,7 +107,7 @@ export default function TaxClassChart({ baseInput }: TaxClassChartProps) {
             );
           }]}
           tooltip={({ data: d }) => {
-            const point = d as unknown as TaxClassDataPoint;
+            const point = d;
             const diff = point.net - currentNet;
             const diffText = diff === 0
               ? ''

@@ -48,6 +48,7 @@
   "chart": {
     "pieCaption": "Distribuci\u00f3n salarial en gr\u00e1fico circular",
     "pieTableCaption": "Desglose salarial mensual",
+    "pieTableCaptionAnnual": "Desglose salarial anual",
     "barCaption": "Desglose mensual en gr\u00e1fico de barras",
     "category": "Categor\u00eda",
     "amount": "Importe",

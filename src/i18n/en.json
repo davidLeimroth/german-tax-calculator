@@ -48,6 +48,7 @@
   "chart": {
     "pieCaption": "Salary breakdown pie chart",
     "pieTableCaption": "Monthly salary breakdown",
+    "pieTableCaptionAnnual": "Annual salary breakdown",
     "barCaption": "Monthly breakdown bar chart",
     "category": "Category",
     "amount": "Amount",
